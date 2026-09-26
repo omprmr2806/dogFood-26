@@ -19,7 +19,14 @@ export function Navbar() {
 
         <nav style={{ display: 'flex', gap: '1.25rem', alignItems: 'center', fontSize: '0.875rem' }}>
           <Link href="/" style={{ color: 'var(--text-secondary)' }}>Home</Link>
+          <Link href="/hackathons" style={{ color: 'var(--text-secondary)' }}>Events</Link>
           
+          {user && (user.role === 'ORGANIZER' || user.role === 'ADMIN') && (
+            <Link href="/organizer/hackathons" style={{ color: 'var(--accent-primary)', fontWeight: 500 }}>
+              Organizer
+            </Link>
+          )}
+
           {user ? (
             <>
               <Link href="/dashboard" style={{ color: 'var(--text-secondary)' }}>Dashboard</Link>

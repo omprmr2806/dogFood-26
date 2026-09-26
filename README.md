@@ -4,17 +4,21 @@ DOGFOOD is an open-source, self-hosted hackathon submission, judging, and commun
 
 ---
 
-## Current Project Status: Phase 2 (Local Authentication & RBAC)
+## Current Project Status: Phase 3 (Hackathon Management & Registration)
 
 - **Completed**:
   - **Foundational Architecture**: Next.js App Router frontend, Express modular backend, PostgreSQL 16 schema.
   - **Local Authentication**: 100% self-hosted auth engine with Argon2id password hashing, server-managed sessions, and secure HttpOnly cookies (`/api/v1/auth/register`, `/login`, `/logout`, `/me`).
   - **Backend-Enforced RBAC**: Centralized role guard pipeline supporting `ADMIN`, `ORGANIZER`, `JUDGE`, and `PARTICIPANT` roles with standard `401 Unauthorized` and `403 Forbidden` responses.
-  - **Security Protections**: Brute-force rate limiting, timing-safe user enumeration defense, session fixation protection, mass-assignment defense, and immutable audit logging.
-  - **Interactive Frontend**: Next.js client session management (`AuthContext`), interactive login, registration, and dashboard with a live RBAC route verification console.
-  - **Testing**: 28 automated unit and integration tests across authentication, RBAC, rate-limiting, and security headers.
+  - **Hackathon Lifecycle State Machine**: Backend-enforced state transitions across `DRAFT`, `OPEN`, `RUNNING`, `JUDGING`, `COMPLETED`, and `ARCHIVED`. Strict validation rejecting illegal state jumps.
+  - **Participant Registration Workflow**: Backend-enforced registration rules checking event `OPEN` state, active registration time windows, and database constraint `UNIQUE(user_id, hackathon_id)`.
+  - **Organizer Management Console**: Create hackathons, edit configuration, transition lifecycle states, view participant registrations, and approve/reject/check-in attendees.
+  - **Participant Discovery & Registration Flow**: Browse public events (`/hackathons`), inspect rules/dates (`/hackathons/[slug]`), register, and view real-time registration status.
+  - **Data Privacy & IDOR Protection**: Private registration records visible only to the owning participant and authorized organizers. Public event endpoints strip private participant fields.
+  - **Security Protections**: Rate limiting, enumeration defense, session fixation protection, mass-assignment defense, and immutable audit logging.
+  - **Testing**: 56 automated unit and integration tests across hackathons, registrations, auth, RBAC, rate-limiting, and security headers.
 - **In Progress / Next Phase**:
-  - Phase 3: Hackathon Event Lifecycle & Registration Workflows.
+  - Phase 4: Teams & Eligibility Formation.
 
 ---
 
@@ -51,9 +55,20 @@ docker compose up --build
 
 ### Access Endpoints:
 - **Web Frontend**: [http://localhost:3000](http://localhost:3000)
+- **Explore Hackathons**: [http://localhost:3000/hackathons](http://localhost:3000/hackathons)
+- **Organizer Dashboard**: [http://localhost:3000/organizer/hackathons](http://localhost:3000/organizer/hackathons)
 - **Sign In**: [http://localhost:3000/login](http://localhost:3000/login)
 - **Dashboard**: [http://localhost:3000/dashboard](http://localhost:3000/dashboard)
 - **Backend API**: [http://localhost:4000/api/v1](http://localhost:4000/api/v1)
+  - `GET /api/v1/hackathons` - Public hackathon list
+  - `POST /api/v1/hackathons` - Create hackathon (Organizer/Admin)
+  - `GET /api/v1/hackathons/:id` - Hackathon details
+  - `PATCH /api/v1/hackathons/:id` - Update hackathon (Organizer/Admin)
+  - `POST /api/v1/hackathons/:id/transitions` - Lifecycle state transition (Organizer/Admin)
+  - `POST /api/v1/hackathons/:id/registrations` - Register for OPEN hackathon (Participant)
+  - `GET /api/v1/hackathons/:id/registration` - Participant self registration status
+  - `GET /api/v1/hackathons/:id/registrations` - Organizer view all registrations
+  - `PATCH /api/v1/hackathons/:id/registrations/:registrationId` - Organizer update status
 - **API Health Check**: [http://localhost:4000/api/v1/health](http://localhost:4000/api/v1/health)
 - **PostgreSQL**: `localhost:5432` (`dogfood_db`)
 
@@ -96,7 +111,7 @@ docker compose down -v
 ## Running Tests & Type Checks
 
 ```bash
-# Run unit & integration test suites (28 tests across auth, rbac, rate-limit, health, security)
+# Run unit & integration test suites (56 tests across hackathons, registrations, auth, rbac, rate-limit, health, security)
 npm test
 
 # Run TypeScript typechecks across all workspaces

@@ -79,7 +79,51 @@ Request ──> [Rate Limiter] ──> [Authenticate Guard] ──> [Role Guard]
 
 ---
 
-## 5. Security & Privacy Baseline
+## 5. Hackathon Lifecycle & Event State Machine (Phase 3)
+
+The hackathon domain is modeled around a deterministic, backend-enforced state machine:
+
+```
+[DRAFT] ──────> [OPEN] ──────> [RUNNING] ──────> [JUDGING] ──────> [COMPLETED] ──────> [ARCHIVED]
+   │               │               │                │                 │
+   └───────────────┴───────────────┴────────────────┴─────────────────┴─────────────> (to ARCHIVED)
+```
+
+### Valid Lifecycle Transitions:
+- `DRAFT` &rarr; `OPEN`, `ARCHIVED`
+- `OPEN` &rarr; `RUNNING`, `DRAFT`, `ARCHIVED`
+- `RUNNING` &rarr; `JUDGING`, `ARCHIVED`
+- `JUDGING` &rarr; `COMPLETED`, `ARCHIVED`
+- `COMPLETED` &rarr; `ARCHIVED`
+- `ARCHIVED` &rarr; (Terminal State)
+
+Every transition request is validated server-side by `HackathonService.transitionStatus()`. Illegal transitions are rejected with `400 INVALID_STATE_TRANSITION`. All transitions are recorded in the `audit_logs` table.
+
+### Reusable Event State Guard Middleware
+The `requireEventState(...allowedStates: HackathonStatus[])` middleware is designed for reuse across subsequent phases (Teams, Submissions, Judging, Voting):
+- Resolves event by UUID or unique slug.
+- Rejects requests when current event state is not in `allowedStates` (`400 INVALID_EVENT_STATE`).
+- Attaches the resolved hackathon to `req.hackathon` to prevent redundant queries downstream.
+
+---
+
+## 6. Participant Registration Workflow & Privacy Boundaries
+
+### Registration Rules
+1. **Authenticated**: User must possess an active session.
+2. **State Guard**: Hackathon must be in state `OPEN`.
+3. **Time Windows**: If `registration_start` or `registration_end` timestamps are specified, current time must fall within the window.
+4. **Database Uniqueness**: Enforced via PostgreSQL constraint `UNIQUE(user_id, hackathon_id)` preventing duplicate registrations.
+
+### Privacy & IDOR Boundaries
+- **Public Surface**: Public hackathon listings and details display event information, rules, and confirmed registration count only. Participant identities and emails are stripped.
+- **Participant Access**: Authenticated participants can view only their own registration status (`GET /api/v1/hackathons/:id/registration`).
+- **Organizer Access**: Authorized Organizers/Admins can view the full registration table including participant names and emails (`GET /api/v1/hackathons/:id/registrations`).
+- **IDOR Protection**: Participants cannot modify their own registration status, approve others, or tamper with cross-hackathon records. Status modification (`PATCH /api/v1/hackathons/:id/registrations/:registrationId`) is strictly gated to `ORGANIZER` and `ADMIN` roles.
+
+---
+
+## 7. Security & Privacy Baseline
 
 1. **Security Headers**: Managed by Helmet with strict Content-Security-Policy.
 2. **CORS**: Explicit whitelist from `CORS_ORIGIN`, rejecting arbitrary cross-site access.

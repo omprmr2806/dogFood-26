@@ -4,7 +4,15 @@ import {
   RegisterRequest,
   LoginRequest,
   UserProfile,
-  ApiResponse
+  ApiResponse,
+  HackathonSummary,
+  HackathonDetail,
+  CreateHackathonRequest,
+  UpdateHackathonRequest,
+  TransitionHackathonRequest,
+  Registration,
+  RegistrationDetail,
+  UpdateRegistrationStatusRequest
 } from '@dogfood/shared';
 
 export class ApiClientError extends Error {
@@ -98,4 +106,119 @@ export async function apiGetMe(): Promise<UserProfile> {
 
   const result = await handleResponse<{ user: UserProfile }>(res);
   return result.user;
+}
+
+// ==========================================
+// HACKATHON EVENT APIS
+// ==========================================
+
+export async function apiGetHackathons(): Promise<HackathonSummary[]> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons`, {
+    method: 'GET',
+    credentials: 'include',
+    cache: 'no-store'
+  });
+
+  const result = await handleResponse<{ hackathons: HackathonSummary[] }>(res);
+  return result.hackathons;
+}
+
+export async function apiGetHackathon(idOrSlug: string): Promise<HackathonDetail> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${idOrSlug}`, {
+    method: 'GET',
+    credentials: 'include',
+    cache: 'no-store'
+  });
+
+  const result = await handleResponse<{ hackathon: HackathonDetail }>(res);
+  return result.hackathon;
+}
+
+export async function apiCreateHackathon(data: CreateHackathonRequest): Promise<HackathonDetail> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+    credentials: 'include'
+  });
+
+  const result = await handleResponse<{ hackathon: HackathonDetail }>(res);
+  return result.hackathon;
+}
+
+export async function apiUpdateHackathon(id: string, data: UpdateHackathonRequest): Promise<HackathonDetail> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+    credentials: 'include'
+  });
+
+  const result = await handleResponse<{ hackathon: HackathonDetail }>(res);
+  return result.hackathon;
+}
+
+export async function apiTransitionHackathon(id: string, data: TransitionHackathonRequest): Promise<HackathonDetail> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${id}/transitions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+    credentials: 'include'
+  });
+
+  const result = await handleResponse<{ hackathon: HackathonDetail }>(res);
+  return result.hackathon;
+}
+
+// ==========================================
+// REGISTRATION APIS
+// ==========================================
+
+export async function apiRegisterForHackathon(hackathonIdOrSlug: string): Promise<Registration> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonIdOrSlug}/registrations`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include'
+  });
+
+  const result = await handleResponse<{ registration: Registration }>(res);
+  return result.registration;
+}
+
+export async function apiGetMyRegistration(hackathonIdOrSlug: string): Promise<Registration | null> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonIdOrSlug}/registration`, {
+    method: 'GET',
+    credentials: 'include',
+    cache: 'no-store'
+  });
+
+  const result = await handleResponse<{ registration: Registration | null }>(res);
+  return result.registration;
+}
+
+export async function apiGetHackathonRegistrations(hackathonIdOrSlug: string): Promise<RegistrationDetail[]> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonIdOrSlug}/registrations`, {
+    method: 'GET',
+    credentials: 'include',
+    cache: 'no-store'
+  });
+
+  const result = await handleResponse<{ registrations: RegistrationDetail[] }>(res);
+  return result.registrations;
+}
+
+export async function apiUpdateRegistrationStatus(
+  hackathonIdOrSlug: string,
+  registrationId: string,
+  data: UpdateRegistrationStatusRequest
+): Promise<Registration> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonIdOrSlug}/registrations/${registrationId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+    credentials: 'include'
+  });
+
+  const result = await handleResponse<{ registration: Registration }>(res);
+  return result.registration;
 }

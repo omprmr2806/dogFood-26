@@ -23,7 +23,7 @@ export default function RootLayout({
           </main>
           <footer style={{ borderTop: '1px solid var(--border-subtle)', padding: '1.5rem 0', textAlign: 'center', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
             <div className="container">
-              <p>DOGFOOD Hackathon Platform &bull; Phase 2 Local Authentication &amp; RBAC &bull; Offline Ready</p>
+              <p>DOGFOOD Hackathon Platform &bull; Phase 3 Event Management &amp; Registration &bull; Offline Ready</p>
             </div>
           </footer>
         </AuthProvider>

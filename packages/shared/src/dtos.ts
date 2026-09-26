@@ -1,4 +1,5 @@
-import { UserRole } from './enums';
+import { UserRole, HackathonStatus, RegistrationStatus } from './enums';
+import { HackathonDetail, HackathonSummary, Registration, RegistrationDetail } from './domain';
 
 export interface ApiResponse<T = unknown> {
   success: boolean;
@@ -48,4 +49,46 @@ export interface LoginRequest {
 
 export interface AuthResponse {
   user: UserProfile;
+}
+
+// Hackathon DTOs
+export interface CreateHackathonRequest {
+  slug: string;
+  name: string;
+  shortDescription?: string;
+  description: string;
+  rules?: string;
+  registrationStart?: string | null;
+  registrationEnd?: string | null;
+  eventStart?: string | null;
+  eventEnd?: string | null;
+  minTeamSize?: number;
+  maxTeamSize?: number;
+}
+
+export interface UpdateHackathonRequest {
+  name?: string;
+  shortDescription?: string;
+  description?: string;
+  rules?: string;
+  registrationStart?: string | null;
+  registrationEnd?: string | null;
+  eventStart?: string | null;
+  eventEnd?: string | null;
+  minTeamSize?: number;
+  maxTeamSize?: number;
+}
+
+export interface TransitionHackathonRequest {
+  targetStatus: HackathonStatus;
+  reason?: string;
+}
+
+// Registration DTOs
+export interface CreateRegistrationRequest {
+  notes?: string;
+}
+
+export interface UpdateRegistrationStatusRequest {
+  status: RegistrationStatus;
 }

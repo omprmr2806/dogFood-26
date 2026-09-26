@@ -16,8 +16,11 @@ export default function HomePage() {
           Designed to run 100% locally with zero cloud dependencies.
         </p>
 
-        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginBottom: '3rem' }}>
-          <Link href="/register" className="btn">Get Started</Link>
+        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginBottom: '3rem', flexWrap: 'wrap' }}>
+          <Link href="/hackathons" className="btn">Explore Hackathons</Link>
+          <Link href="/register" className="btn" style={{ background: 'transparent', border: '1px solid var(--accent-primary)', color: 'var(--accent-primary)' }}>
+            Join DOGFOOD
+          </Link>
           <Link href="/dashboard" className="btn" style={{ background: 'transparent', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)' }}>
             View Dashboard
           </Link>

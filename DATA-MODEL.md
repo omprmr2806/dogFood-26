@@ -6,15 +6,17 @@ This document specifies the data model for the DOGFOOD Hackathon Platform. In Ph
 
 ---
 
-## 2. Phase 1 Tables
+## 2. Implemented Schema
 
-### `schema_migrations`
+### Phase 1 Tables
+
+#### `schema_migrations`
 Tracks applied database migrations to ensure idempotent execution.
 - `id` (SERIAL PRIMARY KEY)
 - `migration_name` (VARCHAR(255) NOT NULL UNIQUE)
 - `applied_at` (TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)
 
-### `system_metadata`
+#### `system_metadata`
 Stores core application metadata, schema versions, and installation state.
 - `key` (VARCHAR(64) PRIMARY KEY)
 - `value` (TEXT NOT NULL)
@@ -22,13 +24,85 @@ Stores core application metadata, schema versions, and installation state.
 
 ---
 
-## 3. Future Phases Schema Preview (Phases 2–10)
+### Phase 2 Tables (Authentication & RBAC)
+
+#### `users`
+User credentials, role assignments, and profile metadata.
+- `id` (UUID PRIMARY KEY DEFAULT uuid_generate_v4())
+- `email` (VARCHAR(255) NOT NULL UNIQUE)
+- `password_hash` (VARCHAR(255) NOT NULL)
+- `full_name` (VARCHAR(255) NOT NULL)
+- `role` (VARCHAR(32) NOT NULL CHECK (role IN ('ADMIN', 'ORGANIZER', 'JUDGE', 'PARTICIPANT')))
+- `status` (VARCHAR(32) NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'SUSPENDED', 'PENDING')))
+- `created_at` (TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)
+- `updated_at` (TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)
+- **Indexes**: `idx_users_email`, `idx_users_role`
+
+#### `sessions`
+Server-tracked cryptographic sessions for revocation and fixation defense.
+- `id` (UUID PRIMARY KEY DEFAULT uuid_generate_v4())
+- `user_id` (UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE)
+- `token_hash` (VARCHAR(255) NOT NULL UNIQUE)
+- `ip_address` (VARCHAR(45))
+- `user_agent` (TEXT)
+- `expires_at` (TIMESTAMP WITH TIME ZONE NOT NULL)
+- `created_at` (TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)
+- `revoked_at` (TIMESTAMP WITH TIME ZONE)
+- **Indexes**: `idx_sessions_user_id`, `idx_sessions_token_hash`, `idx_sessions_expires_at`
+
+#### `audit_logs`
+Immutable audit trail for sensitive administrative, auth, and state transition actions.
+- `id` (UUID PRIMARY KEY DEFAULT uuid_generate_v4())
+- `user_id` (UUID REFERENCES users(id) ON DELETE SET NULL)
+- `action` (VARCHAR(64) NOT NULL)
+- `entity_type` (VARCHAR(64) NOT NULL)
+- `entity_id` (VARCHAR(64))
+- `metadata` (JSONB)
+- `ip_address` (VARCHAR(45))
+- `created_at` (TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)
+- **Indexes**: `idx_audit_logs_user_id`, `idx_audit_logs_action`, `idx_audit_logs_created_at`
+
+---
+
+### Phase 3 Tables (Hackathons & Registrations)
+
+#### `hackathons`
+Event entity tracking lifecycle state, team boundaries, rules, and schedules.
+- `id` (UUID PRIMARY KEY DEFAULT uuid_generate_v4())
+- `slug` (VARCHAR(128) NOT NULL UNIQUE)
+- `name` (VARCHAR(255) NOT NULL)
+- `short_description` (VARCHAR(500))
+- `description` (TEXT NOT NULL)
+- `rules` (TEXT)
+- `status` (VARCHAR(32) NOT NULL DEFAULT 'DRAFT' CHECK (status IN ('DRAFT', 'OPEN', 'RUNNING', 'JUDGING', 'COMPLETED', 'ARCHIVED')))
+- `registration_start` (TIMESTAMP WITH TIME ZONE)
+- `registration_end` (TIMESTAMP WITH TIME ZONE)
+- `event_start` (TIMESTAMP WITH TIME ZONE)
+- `event_end` (TIMESTAMP WITH TIME ZONE)
+- `min_team_size` (INTEGER NOT NULL DEFAULT 1 CHECK (min_team_size >= 1))
+- `max_team_size` (INTEGER NOT NULL DEFAULT 4 CHECK (max_team_size >= min_team_size))
+- `created_by` (UUID REFERENCES users(id) ON DELETE SET NULL)
+- `created_at` (TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)
+- `updated_at` (TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)
+- **Indexes**: `idx_hackathons_slug` (UNIQUE), `idx_hackathons_status`, `idx_hackathons_created_by`
+
+#### `registrations`
+Participant registration applications and attendance states for an event.
+- `id` (UUID PRIMARY KEY DEFAULT uuid_generate_v4())
+- `hackathon_id` (UUID NOT NULL REFERENCES hackathons(id) ON DELETE CASCADE)
+- `user_id` (UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE)
+- `status` (VARCHAR(32) NOT NULL DEFAULT 'PENDING' CHECK (status IN ('PENDING', 'ACCEPTED', 'REJECTED', 'CHECKED_IN')))
+- `registered_at` (TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)
+- `updated_at` (TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)
+- **Constraints**: `UNIQUE (user_id, hackathon_id)` - A user cannot register twice for the same hackathon.
+- **Indexes**: `idx_registrations_hackathon_id`, `idx_registrations_user_id`, `idx_registrations_status`
+
+---
+
+## 3. Future Phases Schema Preview (Phases 4–10)
 
 | Table | Purpose |
 | :--- | :--- |
-| `users` | User credentials, roles (`ADMIN`, `ORGANIZER`, `JUDGE`, `PARTICIPANT`), profile metadata |
-| `hackathons` | Event details, scheduling, and lifecycle state (`DRAFT`, `OPEN`, `RUNNING`, `JUDGING`, `COMPLETED`, `ARCHIVED`) |
-| `registrations` | Participant applications and attendance state |
 | `teams` | Participant teams, invite codes, and hackathon association |
 | `team_members` | Membership records enforcing one team per participant per event |
 | `submissions` | Project submissions, repository links, descriptions, and media |
@@ -37,4 +111,3 @@ Stores core application metadata, schema versions, and installation state.
 | `judge_assignments`| Workload-balanced evaluation allocations avoiding conflicts of interest |
 | `judge_scores` | Normalized and raw scores per assignment and criteria |
 | `community_votes` | Public votes with deduplication and self-voting restrictions |
-| `audit_logs` | Immutable audit trail for administrative and sensitive actions |

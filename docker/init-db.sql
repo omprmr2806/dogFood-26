@@ -18,14 +18,15 @@ CREATE TABLE IF NOT EXISTS system_metadata (
 );
 
 INSERT INTO system_metadata (key, value)
-VALUES ('dogfood_version', '0.2.0-phase2'),
+VALUES ('dogfood_version', '0.3.0-phase3'),
        ('seeded_environment', 'true'),
        ('initialized_at', CURRENT_TIMESTAMP::text)
 ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value;
 
 INSERT INTO schema_migrations (migration_name)
 VALUES ('001_initial_setup.sql'),
-       ('002_auth_and_rbac.sql')
+       ('002_auth_and_rbac.sql'),
+       ('003_hackathons_and_registrations.sql')
 ON CONFLICT (migration_name) DO NOTHING;
 
 -- Users Table
@@ -115,3 +116,135 @@ ON CONFLICT (email) DO UPDATE SET
   full_name = EXCLUDED.full_name,
   role = EXCLUDED.role,
   status = EXCLUDED.status;
+
+-- Phase 3: Hackathons Table
+CREATE TABLE IF NOT EXISTS hackathons (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    slug VARCHAR(100) NOT NULL UNIQUE,
+    name VARCHAR(255) NOT NULL,
+    short_description VARCHAR(500),
+    description TEXT NOT NULL,
+    rules TEXT,
+    status VARCHAR(32) NOT NULL DEFAULT 'DRAFT' CHECK (status IN ('DRAFT', 'OPEN', 'RUNNING', 'JUDGING', 'COMPLETED', 'ARCHIVED')),
+    registration_start TIMESTAMP WITH TIME ZONE,
+    registration_end TIMESTAMP WITH TIME ZONE,
+    event_start TIMESTAMP WITH TIME ZONE,
+    event_end TIMESTAMP WITH TIME ZONE,
+    min_team_size INT NOT NULL DEFAULT 1 CHECK (min_team_size > 0),
+    max_team_size INT NOT NULL DEFAULT 4 CHECK (max_team_size >= min_team_size AND max_team_size <= 20),
+    created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_hackathons_status ON hackathons(status);
+CREATE INDEX IF NOT EXISTS idx_hackathons_slug ON hackathons(slug);
+CREATE INDEX IF NOT EXISTS idx_hackathons_created_by ON hackathons(created_by);
+
+-- Registrations Table
+CREATE TABLE IF NOT EXISTS registrations (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    hackathon_id UUID NOT NULL REFERENCES hackathons(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    status VARCHAR(32) NOT NULL DEFAULT 'ACCEPTED' CHECK (status IN ('PENDING', 'ACCEPTED', 'REJECTED', 'CHECKED_IN')),
+    registered_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_registrations_user_hackathon UNIQUE(user_id, hackathon_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_registrations_hackathon_id ON registrations(hackathon_id);
+CREATE INDEX IF NOT EXISTS idx_registrations_user_id ON registrations(user_id);
+CREATE INDEX IF NOT EXISTS idx_registrations_status ON registrations(status);
+
+INSERT INTO schema_migrations (migration_name)
+VALUES ('003_hackathons_and_registrations.sql')
+ON CONFLICT (migration_name) DO NOTHING;
+
+-- Seed Phase 3 Demo Hackathons
+INSERT INTO hackathons (
+    id, slug, name, short_description, description, rules, status, 
+    min_team_size, max_team_size, created_by, created_at, updated_at
+) VALUES
+(
+    '10000000-0000-0000-0000-000000000001',
+    'robotics-sprint-2026',
+    'Autonomous Robotics Sprint',
+    'Early-stage draft hackathon focusing on physical computing and microcontrollers.',
+    'Build next-generation robotics applications using local simulation and edge hardware. All projects must run without external cloud reliance.',
+    'Standard hardware safety guidelines apply. Teams of 2 to 4 members.',
+    'DRAFT',
+    2, 4,
+    '00000000-0000-0000-0000-000000000002',
+    CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+),
+(
+    '10000000-0000-0000-0000-000000000002',
+    'dogfood-alpha-2026',
+    'Dogfood Alpha Hackathon',
+    'Open for registration! Build self-hosted, resilient developer tooling.',
+    'Welcome to the premier DOGFOOD hackathon. Challenge yourself to build modular platforms, offline utilities, and open-source infrastructure tools.',
+    'All submissions must run via Docker Compose locally. No cloud vendor lock-in permitted. Teams of 1 to 4 members.',
+    'OPEN',
+    1, 4,
+    '00000000-0000-0000-0000-000000000002',
+    CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+),
+(
+    '10000000-0000-0000-0000-000000000003',
+    'cloud-systems-2026',
+    'Cloud Systems Challenge',
+    'Currently running! Teams are building distributed monoliths and high-throughput systems.',
+    'Engineering competition testing system stability, database normalization, and secure RBAC implementations under load.',
+    'Code freeze at deadline. Teams of 1 to 5 members.',
+    'RUNNING',
+    1, 5,
+    '00000000-0000-0000-0000-000000000002',
+    CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+),
+(
+    '10000000-0000-0000-0000-000000000004',
+    'ai-agents-blitz-2026',
+    'AI Agents Blitz',
+    'Submissions closed; judging evaluation phase is currently active.',
+    'Evaluating agentic workflows, autonomous tool calling, and deterministic evaluation engines across submitted projects.',
+    'Judges evaluate submissions against multi-criteria weighted rubrics.',
+    'JUDGING',
+    1, 4,
+    '00000000-0000-0000-0000-000000000002',
+    CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+),
+(
+    '10000000-0000-0000-0000-000000000005',
+    'winter-sprint-2025',
+    'Winter Code Sprint',
+    'Completed hackathon archive with finalized normalized leaderboard results.',
+    'The 2025 annual winter sprint concluded with over 50 projects evaluated and certified.',
+    'Historical event archive. Read-only.',
+    'COMPLETED',
+    1, 4,
+    '00000000-0000-0000-0000-000000000002',
+    CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+)
+ON CONFLICT (slug) DO UPDATE SET
+    name = EXCLUDED.name,
+    short_description = EXCLUDED.short_description,
+    description = EXCLUDED.description,
+    status = EXCLUDED.status;
+
+-- Seed Phase 3 Demo Registrations
+INSERT INTO registrations (id, hackathon_id, user_id, status)
+VALUES
+(
+    '20000000-0000-0000-0000-000000000001',
+    '10000000-0000-0000-0000-000000000002',
+    '00000000-0000-0000-0000-000000000004',
+    'ACCEPTED'
+),
+(
+    '20000000-0000-0000-0000-000000000002',
+    '10000000-0000-0000-0000-000000000003',
+    '00000000-0000-0000-0000-000000000004',
+    'ACCEPTED'
+)
+ON CONFLICT (user_id, hackathon_id) DO NOTHING;
+

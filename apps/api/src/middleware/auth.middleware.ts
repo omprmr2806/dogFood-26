@@ -64,3 +64,33 @@ export async function authenticate(req: Request, _res: Response, next: NextFunct
     next(err);
   }
 }
+
+export async function optionalAuthenticate(req: Request, _res: Response, next: NextFunction): Promise<void> {
+  try {
+    const token = extractToken(req);
+    if (!token) {
+      return next();
+    }
+
+    const payload = verifySessionToken(token);
+    if (!payload) {
+      return next();
+    }
+
+    const activeSession = await sessionRepository.findActiveSession(payload.sessionId);
+    if (!activeSession) {
+      return next();
+    }
+
+    req.user = {
+      id: payload.userId,
+      email: payload.email,
+      role: payload.role,
+      sessionId: payload.sessionId
+    };
+
+    next();
+  } catch (_err) {
+    next();
+  }
+}
