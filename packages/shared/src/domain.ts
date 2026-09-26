@@ -285,3 +285,106 @@ export interface OrganizerJudgingMonitor {
     completionPercentage: number;
   }[];
 }
+
+// ==========================================
+// PHASE 8: SCORE NORMALIZATION & RANKINGS
+// ==========================================
+
+export interface JudgeScoreDistribution {
+  judgeId: string;
+  judgeName?: string;
+  evaluationsCount: number;
+  mean: number;
+  stdDev: number;
+  method: 'Z_SCORE' | 'FALLBACK_RAW';
+}
+
+export interface ProjectJudgingResult {
+  id: string;
+  hackathonId: string;
+  submissionId: string;
+  submissionTitle: string;
+  submissionTagline?: string;
+  teamId: string;
+  teamName: string;
+  rawScoreAvg: number;
+  normalizedScore: number;
+  evaluationsCount: number;
+  evaluationsCompleted: number;
+  rank: number | null;
+  isTied: boolean;
+  isDisqualified: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ResultsPreviewResponse {
+  hackathonId: string;
+  hackathonName: string;
+  totalSubmissions: number;
+  evaluatedSubmissions: number;
+  judgesDistributions: JudgeScoreDistribution[];
+  results: ProjectJudgingResult[];
+  normalizationStrategy: string;
+}
+
+// ==========================================
+// PHASE 9: COMMUNITY VOTING
+// ==========================================
+
+export interface SubmissionVote {
+  id: string;
+  hackathonId: string;
+  submissionId: string;
+  userId: string;
+  createdAt: string;
+}
+
+export interface VoteCount {
+  submissionId: string;
+  voteCount: number;
+  userHasVoted: boolean;
+}
+
+// ==========================================
+// PHASE 10: RESULTS & LEADERBOARD
+// ==========================================
+
+export interface LeaderboardEntry {
+  rank: number | null;
+  submissionId: string;
+  submissionTitle: string;
+  submissionTagline?: string;
+  teamId: string;
+  teamName: string;
+  normalizedScore: number;
+  rawScoreAvg: number;
+  voteCount: number;
+  isTied: boolean;
+  isDisqualified: boolean;
+  evaluationsCount: number;
+}
+
+export interface PublishedResults {
+  hackathonId: string;
+  hackathonName: string;
+  hackathonSlug: string;
+  publishedAt: string;
+  isPublished: boolean;
+  leaderboard: LeaderboardEntry[];
+  totalVotes: number;
+  totalSubmissions: number;
+  totalJudgedSubmissions: number;
+}
+
+export interface AuditLogEntry {
+  id: string;
+  hackathonId: string;
+  userId: string;
+  userEmail: string;
+  action: string;
+  entityType: string;
+  entityId?: string;
+  details?: Record<string, unknown>;
+  createdAt: string;
+}

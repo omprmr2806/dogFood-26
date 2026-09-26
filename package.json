@@ -1,6 +1,6 @@
 {
   "name": "dogfood-monorepo",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "description": "DOGFOOD - Open-source, self-hosted hackathon submission and judging platform",
   "workspaces": [

@@ -10,15 +10,16 @@ export function createRateLimiter(options: {
   windowMs: number;
   maxRequests: number;
   message?: string;
+  keyFn?: (req: Request) => string;
 }) {
-  const ipMap = new Map<string, RateLimitRecord>();
+  const store = new Map<string, RateLimitRecord>();
 
   // Periodically sweep expired entries every 2 minutes
   const cleanupInterval = setInterval(() => {
     const now = Date.now();
-    for (const [ip, record] of ipMap.entries()) {
+    for (const [key, record] of store.entries()) {
       if (now > record.resetTime) {
-        ipMap.delete(ip);
+        store.delete(key);
       }
     }
   }, 120000);
@@ -34,12 +35,13 @@ export function createRateLimiter(options: {
       return next();
     }
 
-    const ip = req.ip || req.socket.remoteAddress || 'unknown-ip';
+    const defaultKey = req.ip || req.socket.remoteAddress || 'unknown-ip';
+    const key = options.keyFn ? options.keyFn(req) : defaultKey;
     const now = Date.now();
-    const record = ipMap.get(ip);
+    const record = store.get(key);
 
     if (!record || now > record.resetTime) {
-      ipMap.set(ip, {
+      store.set(key, {
         count: 1,
         resetTime: now + options.windowMs
       });
@@ -50,7 +52,7 @@ export function createRateLimiter(options: {
     if (record.count > options.maxRequests) {
       return next(
         new AppError(
-          options.message || 'Too many authentication attempts. Please try again later.',
+          options.message || 'Too many requests. Please try again later.',
           429,
           'RATE_LIMIT_EXCEEDED'
         )
@@ -61,8 +63,28 @@ export function createRateLimiter(options: {
   };
 }
 
+// Auth: 5 attempts per 15 minutes (hardened for Phase 11)
 export const authRateLimiter = createRateLimiter({
-  windowMs: 60 * 1000, // 1 minute
-  maxRequests: 10,     // 10 requests per minute
-  message: 'Too many login or registration attempts. Please wait a minute before trying again.'
+  windowMs: 15 * 60 * 1000,
+  maxRequests: 5,
+  message: 'Too many login or registration attempts. Please wait 15 minutes before trying again.'
+});
+
+// Voting: 10 votes per minute per user (anti-abuse)
+export const voteRateLimiter = createRateLimiter({
+  windowMs: 60 * 1000,
+  maxRequests: 10,
+  message: 'Too many voting actions. Please slow down.',
+  keyFn: (req) => {
+    // Key by authenticated user ID when available, fallback to IP
+    const userId = (req as Request & { user?: { id: string } }).user?.id;
+    return userId ? `vote:user:${userId}` : `vote:ip:${req.ip || 'unknown'}`;
+  }
+});
+
+// General API: 300 requests per minute per IP
+export const generalRateLimiter = createRateLimiter({
+  windowMs: 60 * 1000,
+  maxRequests: 300,
+  message: 'API rate limit exceeded. Please slow down.'
 });

@@ -255,3 +255,29 @@ export interface SubmitEvaluationRequest {
   scores: CriterionScoreInput[];
   feedback?: string;
 }
+
+// ==========================================
+// PHASE 9: COMMUNITY VOTING DTOS
+// ==========================================
+
+export interface CastVoteRequest {
+  // Body may be empty; submission identified by route param
+}
+
+export interface VotingWindowRequest {
+  votingStart?: string | null;
+  votingEnd?: string | null;
+  votingEnabled: boolean;
+}
+
+// ==========================================
+// PHASE 10: RESULTS DTOS
+// ==========================================
+
+export interface PublishResultsRequest {
+  confirm: boolean;
+}
+
+export interface ExportFormat {
+  format: 'csv' | 'json';
+}

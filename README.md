@@ -2,42 +2,48 @@
 
 DOGFOOD is an open-source, self-hosted hackathon submission, judging, and community voting platform. It is engineered from the ground up to run reliably in containerized or local environments with **zero external cloud runtime dependencies** and full offline capability.
 
+> **Version: 1.0.0** — Production-ready release. All core phases complete.
+
 ---
 
-## Current Project Status: Phase 6 (Judge Management + Automated Judge Assignment)
+## Project Status: v1.0.0 — Complete
 
-- **Completed**:
-  - **Foundational Architecture**: Next.js App Router frontend, Express modular backend, PostgreSQL 16 schema.
-  - **Local Authentication**: 100% self-hosted auth engine with Argon2id password hashing, server-managed sessions, and secure HttpOnly cookies (`/api/v1/auth/register`, `/login`, `/logout`, `/me`).
-  - **Backend-Enforced RBAC**: Centralized role guard pipeline supporting `ADMIN`, `ORGANIZER`, `JUDGE`, and `PARTICIPANT` roles with standard `401 Unauthorized` and `403 Forbidden` responses.
-  - **Hackathon Lifecycle State Machine**: Backend-enforced state transitions across `DRAFT`, `OPEN`, `RUNNING`, `JUDGING`, `COMPLETED`, and `ARCHIVED`. Strict validation rejecting illegal state jumps.
-  - **Participant Registration Workflow**: Backend-enforced registration rules checking event `OPEN` state, active registration time windows, and database constraint `UNIQUE(user_id, hackathon_id)`.
-  - **Team Formation & Membership System**:
-    - Database-enforced rule: A user can belong to only ONE team within the same hackathon via `UNIQUE(hackathon_id, user_id)`.
-    - Strict capacity enforcement matching `hackathon.max_team_size`.
-    - Atomic join transactions with `SELECT ... FOR UPDATE` row-level locks preventing race-condition overcapacity.
-    - Secure randomized invite codes (`DOG-XXXXXX`), case-insensitive matching, and leader-only regeneration.
-    - Full IDOR defense: Participants cannot rename, disband, or tamper with other teams.
-    - Data privacy: Invite codes and member emails are strictly omitted from public team listings.
-  - **Submissions & Public Project Gallery**:
-    - Relational integrity: Exactly one submission per team enforced at the PostgreSQL layer via `UNIQUE(team_id)` and composite FK `(team_id, hackathon_id) REFERENCES teams(id, hackathon_id)`.
-    - Submission Versioning: Immutable audit snapshotting in `submission_versions` capturing project content at submission.
-    - URL Scheme Security: Strictly whitelisted `http://` and `https://` schemes; rejected `javascript:`, `data:`, `file:`, `ftp:`. 100% offline with zero server-side external fetches (SSRF immunity).
-    - Event State Locking: Participant edits strictly blocked once hackathon enters `JUDGING`, `COMPLETED`, or `ARCHIVED` status.
-    - Public Project Gallery (`/gallery`, `/gallery/[id]`): Server-side search, technology filtering, pagination, and privacy boundaries.
-    - Participant Submission Workspace (`/hackathons/[slug]/submission`): Form drafting, auto-save, URL validation, and confirmation submission workflow.
-    - Organizer Submission Supervision (`/organizer/hackathons/[id]/submissions`): Live metrics, submission rosters, and administrative status controls.
-  - **Judge Management & Automated Judge Assignment (Phase 6)**:
-    - **Event-Specific Judge Participation**: Scoped authorization via `hackathon_judges`; role `JUDGE` alone grants zero cross-event access without active enrollment.
-    - **Conflict of Interest (COI) Prevention**: Backend-enforced exclusion for structural team membership (`team_members`) and declared advisor/personal conflicts (`judge_conflicts`).
-    - **Deterministic Workload Balancer (`JudgeAssignmentService`)**: Pure deterministic algorithm minimizing workload variance across active judges; zero duplicate assignments; safe failure reporting exact unassignable submissions.
-    - **Preview & Transactional Finalization**: Safe in-memory preview calculation; atomic multi-step PostgreSQL transaction (`BEGIN ... COMMIT`) for finalization; safe regeneration requiring explicit overwrite confirmation.
-    - **Judge Portal & Assigned Queue (`/judge/assignments`)**: Dedicated view of assigned submissions with IDOR protection (`assignment.judge_id === req.user.id`) and participant privacy boundaries.
-    - **Organizer Judging Console (`/organizer/hackathons/[id]/judges`)**: Judge roster, activation/deactivation, COI manager, preview generator, and finalization workflow.
-  - **Security Protections**: Rate limiting, enumeration defense, session fixation protection, mass-assignment defense, and immutable audit logging.
-  - **Testing**: 121 automated unit and integration tests across 11 test suites passing (100% passing).
-- **In Progress / Next Phase**:
-  - Phase 7: Judging Rubrics, Criterion Scoring & Score Normalization.
+All phases have been implemented, verified, and committed:
+
+| Phase | Feature | Status |
+|-------|---------|--------|
+| 1 | Foundation + Docker + PostgreSQL | ✅ |
+| 2 | Local Authentication + RBAC | ✅ |
+| 3 | Hackathon/Event Management + Registration | ✅ |
+| 4 | Teams + Membership | ✅ |
+| 5 | Submissions + Public Gallery | ✅ |
+| 6 | Judge Management + Assignment Engine | ✅ |
+| 7 | Judging Rubrics + Scoring Console | ✅ |
+| 8 | Score Normalization + Rankings | ✅ |
+| 9 | Community Voting + Anti-Abuse | ✅ |
+| 10 | Results + Leaderboard + Exports + Audit | ✅ |
+| 11 | Security Hardening | ✅ |
+| 12 | Acceptance Test Suite | ✅ |
+| 13 | Documentation | ✅ |
+| 14 | UI/UX Redesign | ✅ |
+| 15 | Final Release | ✅ |
+
+**Complete Feature Highlights:**
+
+- **100% Offline** — no external cloud service dependencies at runtime
+- **Local Auth** — Argon2id password hashing, server-managed sessions, HttpOnly cookies
+- **Backend RBAC** — `ADMIN`, `ORGANIZER`, `JUDGE`, `PARTICIPANT` enforced server-side
+- **Event Lifecycle** — `DRAFT → OPEN → RUNNING → JUDGING → COMPLETED → ARCHIVED`
+- **Team Formation** — invite-code joins, leader controls, DB-enforced capacity
+- **Submissions** — draft/submit/lock lifecycle, versioning, URL validation
+- **Judging** — COI prevention, workload balancing, deterministic assignment
+- **Rubric Scoring** — configurable weighted criteria, evaluation console
+- **Z-Score Normalization** — fair normalized rankings with raw-score fallback
+- **Community Voting** — one vote per user per submission, voting windows, anti-abuse rate limiting
+- **Results & Leaderboard** — publish/unpublish lifecycle, immutable snapshots, CSV/JSON export
+- **Audit Log** — append-only audit trail per hackathon
+- **Security** — Helmet, CORS lockdown, rate limiting (auth 5/15min, votes 10/min, API 300/min)
+- **Tests** — 140+ automated unit + integration tests
 
 ---
 

@@ -5,6 +5,7 @@ import { helmetSecurity, corsSecurity } from './middleware/security';
 import { requestLogger } from './middleware/requestLogger';
 import { errorHandler } from './middleware/errorHandler';
 import { apiRouter } from './routes';
+import { generalRateLimiter } from './middleware/rateLimiter';
 
 export function createApp(): Application {
   const app = express();
@@ -25,6 +26,9 @@ export function createApp(): Application {
 
   // Request logging
   app.use(requestLogger);
+
+  // Global API rate limiting (Phase 11 security)
+  app.use(env.API_PREFIX, generalRateLimiter);
 
   // Mount API Router
   app.use(env.API_PREFIX, apiRouter);

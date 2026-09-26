@@ -1010,7 +1010,146 @@ INSERT INTO schema_migrations (migration_name)
 VALUES ('007_rubrics_and_scores.sql')
 ON CONFLICT (migration_name) DO NOTHING;
 
+-- ============================================================================
+-- PHASE 8: SCORE NORMALIZATION & RANKINGS
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS project_judging_results (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    hackathon_id UUID NOT NULL REFERENCES hackathons(id) ON DELETE CASCADE,
+    submission_id UUID NOT NULL REFERENCES submissions(id) ON DELETE CASCADE,
+    raw_score_avg NUMERIC(6, 2) NOT NULL DEFAULT 0,
+    normalized_score NUMERIC(6, 2) NOT NULL DEFAULT 0,
+    evaluations_count INT NOT NULL DEFAULT 0,
+    evaluations_completed INT NOT NULL DEFAULT 0,
+    rank INT,
+    is_tied BOOLEAN NOT NULL DEFAULT FALSE,
+    is_finalized BOOLEAN NOT NULL DEFAULT FALSE,
+    finalized_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_hackathon_submission_result UNIQUE (hackathon_id, submission_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_project_results_hackathon_id ON project_judging_results(hackathon_id);
+CREATE INDEX IF NOT EXISTS idx_project_results_submission_id ON project_judging_results(submission_id);
+CREATE INDEX IF NOT EXISTS idx_project_results_rank ON project_judging_results(rank);
+
+-- Phase 8 Seed Data
+INSERT INTO project_judging_results (
+  id, hackathon_id, submission_id, raw_score_avg, normalized_score, evaluations_count, evaluations_completed, rank, is_tied, is_finalized
+)
+VALUES
+  (
+    'e0000000-0000-0000-0000-000000000001',
+    '10000000-0000-0000-0000-000000000004',
+    '50000000-0000-0000-0000-000000000008',
+    93.50,
+    93.50,
+    2,
+    1,
+    1,
+    FALSE,
+    FALSE
+  ),
+  (
+    'e0000000-0000-0000-0000-000000000002',
+    '10000000-0000-0000-0000-000000000004',
+    '50000000-0000-0000-0000-000000000003',
+    86.75,
+    86.75,
+    2,
+    2,
+    2,
+    FALSE,
+    FALSE
+  )
+ON CONFLICT (hackathon_id, submission_id) DO UPDATE SET
+  raw_score_avg = EXCLUDED.raw_score_avg,
+  normalized_score = EXCLUDED.normalized_score,
+  rank = EXCLUDED.rank;
+
+-- Record Phase 8 Migration
+INSERT INTO schema_migrations (migration_name)
+VALUES ('008_normalization_and_rankings.sql')
+ON CONFLICT (migration_name) DO NOTHING;
+
 -- Update Application Version
 UPDATE system_metadata
-SET value = '0.7.0-phase7', updated_at = CURRENT_TIMESTAMP
+SET value = '0.8.0-phase8', updated_at = CURRENT_TIMESTAMP
+WHERE key = 'dogfood_version';
+
+-- ============================================================
+-- PHASE 9: COMMUNITY VOTING
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS submission_votes (
+    id            UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    hackathon_id  UUID NOT NULL REFERENCES hackathons(id) ON DELETE CASCADE,
+    submission_id UUID NOT NULL REFERENCES submissions(id) ON DELETE CASCADE,
+    user_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at    TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT uq_vote_user_submission UNIQUE (user_id, submission_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_votes_submission  ON submission_votes(submission_id);
+CREATE INDEX IF NOT EXISTS idx_votes_hackathon   ON submission_votes(hackathon_id);
+CREATE INDEX IF NOT EXISTS idx_votes_user        ON submission_votes(user_id);
+
+CREATE OR REPLACE VIEW submission_vote_counts AS
+SELECT
+    submission_id,
+    hackathon_id,
+    COUNT(*) AS vote_count
+FROM submission_votes
+GROUP BY submission_id, hackathon_id;
+
+ALTER TABLE hackathons
+    ADD COLUMN IF NOT EXISTS voting_start   TIMESTAMP WITH TIME ZONE,
+    ADD COLUMN IF NOT EXISTS voting_end     TIMESTAMP WITH TIME ZONE,
+    ADD COLUMN IF NOT EXISTS voting_enabled BOOLEAN NOT NULL DEFAULT FALSE;
+
+INSERT INTO schema_migrations (migration_name)
+VALUES ('009_community_voting.sql')
+ON CONFLICT (migration_name) DO NOTHING;
+
+-- ============================================================
+-- PHASE 10: RESULTS PUBLICATION + AUDIT LOG
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS hackathon_results_publications (
+    id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    hackathon_id UUID NOT NULL REFERENCES hackathons(id) ON DELETE CASCADE,
+    published_by UUID NOT NULL REFERENCES users(id),
+    published_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    snapshot     JSONB NOT NULL DEFAULT '{}',
+    is_active    BOOLEAN NOT NULL DEFAULT TRUE
+);
+
+CREATE INDEX IF NOT EXISTS idx_results_pub_hackathon ON hackathon_results_publications(hackathon_id);
+
+CREATE TABLE IF NOT EXISTS audit_log (
+    id           UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    hackathon_id UUID REFERENCES hackathons(id) ON DELETE SET NULL,
+    user_id      UUID REFERENCES users(id) ON DELETE SET NULL,
+    user_email   VARCHAR(255),
+    action       VARCHAR(128) NOT NULL,
+    entity_type  VARCHAR(64),
+    entity_id    UUID,
+    details      JSONB DEFAULT '{}',
+    created_at   TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_audit_hackathon  ON audit_log(hackathon_id);
+CREATE INDEX IF NOT EXISTS idx_audit_user       ON audit_log(user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_action     ON audit_log(action);
+CREATE INDEX IF NOT EXISTS idx_audit_created_at ON audit_log(created_at);
+
+INSERT INTO schema_migrations (migration_name)
+VALUES ('010_results_and_audit.sql')
+ON CONFLICT (migration_name) DO NOTHING;
+
+-- Update Application Version
+UPDATE system_metadata
+SET value = '1.0.0-rc', updated_at = CURRENT_TIMESTAMP
 WHERE key = 'dogfood_version';
