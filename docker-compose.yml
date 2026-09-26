@@ -1,0 +1,69 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: dogfood-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-dogfood_db}
+      POSTGRES_USER: ${DB_USER:-dogfood_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-dogfood_password}
+    volumes:
+      - dogfood_pgdata:/var/lib/postgresql/data
+      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-dogfood_user} -d ${DB_NAME:-dogfood_db}"]
+      interval: 4s
+      timeout: 4s
+      retries: 5
+      start_period: 5s
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    container_name: dogfood-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      API_PREFIX: /api/v1
+      CORS_ORIGIN: http://localhost:3000
+      DATABASE_URL: postgres://${DB_USER:-dogfood_user}:${DB_PASSWORD:-dogfood_password}@db:5432/${DB_NAME:-dogfood_db}
+      JWT_SECRET: ${JWT_SECRET:-dogfood_local_dev_secret_key_minimum_32_characters_long}
+      BODY_SIZE_LIMIT: 100kb
+    ports:
+      - "4000:4000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4000/api/v1/health || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.web
+    container_name: dogfood-web
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      NEXT_PUBLIC_API_URL: http://localhost:4000/api/v1
+      NEXT_PUBLIC_APP_NAME: "DOGFOOD Platform"
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  dogfood_pgdata:
+    name: dogfood_pgdata

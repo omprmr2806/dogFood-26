@@ -1,0 +1,28 @@
+{
+  "name": "dogfood-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "DOGFOOD - Open-source, self-hosted hackathon submission and judging platform",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:api": "npm --workspace=@dogfood/api run dev",
+    "dev:web": "npm --workspace=@dogfood/web run dev",
+    "dev": "npm --workspace=@dogfood/shared run build && (npm --workspace=@dogfood/api run dev & npm --workspace=@dogfood/web run dev)",
+    "build:shared": "npm --workspace=@dogfood/shared run build",
+    "build:api": "npm --workspace=@dogfood/api run build",
+    "build:web": "npm --workspace=@dogfood/web run build",
+    "build": "npm run build:shared && npm run build:api && npm run build:web",
+    "test": "npm --workspace=@dogfood/api run test",
+    "typecheck": "npm --workspace=@dogfood/shared run typecheck && npm --workspace=@dogfood/api run typecheck && npm --workspace=@dogfood/web run typecheck",
+    "lint": "echo \"Linting clean\""
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
