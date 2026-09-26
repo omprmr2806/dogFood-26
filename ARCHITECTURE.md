@@ -123,7 +123,62 @@ The `requireEventState(...allowedStates: HackathonStatus[])` middleware is desig
 
 ---
 
-## 7. Security & Privacy Baseline
+## 8. Team & Membership Management Architecture (Phase 4)
+
+### Team Lifecycle & States
+Teams follow a managed state machine integrated with the hackathon lifecycle:
+- **`ACTIVE`**: Default state upon team creation. Members can be added, invite codes regenerated, or members leave while event is in `OPEN` or `RUNNING`.
+- **`LOCKED`**: Automatic transition when hackathon moves to `JUDGING` or `COMPLETED`. Membership changes and renames are forbidden.
+- **`DISBANDED`**: Triggered when the last member (or leader without remaining members) leaves, or when an organizer disbands the team.
+
+```
+[ACTIVE] ──(Judging State / Lock)──> [LOCKED]
+   │
+   └──(Leader Disbands / All Leave)──> [DISBANDED]
+```
+
+### Database-Enforced One-Team-Per-Hackathon Constraint
+Rather than relying solely on application-level checks, DOGFOOD guarantees that a participant cannot join multiple teams within the same hackathon using a relational composite foreign key:
+```sql
+-- teams table defines composite unique key:
+UNIQUE (id, hackathon_id)
+
+-- team_members table references (team_id, hackathon_id) and enforces single membership per hackathon:
+CONSTRAINT fk_team_members_team_hackathon
+    FOREIGN KEY (team_id, hackathon_id) REFERENCES teams(id, hackathon_id) ON DELETE CASCADE,
+CONSTRAINT uq_hackathon_user
+    UNIQUE (hackathon_id, user_id)
+```
+This physical constraint makes cross-team double-joining impossible even under concurrent race conditions.
+
+### Concurrency & Race-Condition Safety
+Team joining is race-sensitive (e.g. two users simultaneously joining a team with 1 slot remaining). To prevent capacity overflow:
+1. Operations execute within a PostgreSQL `SERIALIZABLE` or `READ COMMITTED` transaction.
+2. The team row is acquired with pessimistic locking:
+   ```sql
+   SELECT * FROM teams WHERE id = $1 FOR UPDATE;
+   ```
+3. Current member count is evaluated against `hackathons.max_team_size` within the locked transaction before inserting the new member.
+
+### Secure Invite Code Mechanism
+- **Generation**: Cryptographically random 8-character alphanumeric string generated via `crypto.randomBytes(6)` formatted in uppercase without ambiguous characters.
+- **Privacy Protection**: Invite codes are only exposed to authenticated team members, the team leader, and event organizers. Public team listings strictly omit `invite_code`.
+- **Regeneration**: Authorized team leaders can rotate the invite code at any time, instantly invalidating previous join links.
+
+### Team Authorization & IDOR Defenses
+Every team endpoint enforces a multi-layer verification chain:
+1. `authenticate` verifies session validity.
+2. `requireRegistration` verifies the user is an `ACCEPTED` participant in the event.
+3. `teamService` enforces role-specific rules:
+   - Only `LEADER` can rename the team, regenerate invite codes, or remove members.
+   - Non-members attempting `PATCH /teams/:teamId` or member modifications receive `403 Forbidden` (`FORBIDDEN`).
+   - If the leader leaves, leadership is automatically transferred to the next oldest member; if no members remain, the team transitions to `DISBANDED`.
+   - `ORGANIZER` and `ADMIN` have administrative oversight to disband teams or audit rosters.
+   - `JUDGE` role has no administrative access to teams.
+
+---
+
+## 9. Security & Privacy Baseline
 
 1. **Security Headers**: Managed by Helmet with strict Content-Security-Policy.
 2. **CORS**: Explicit whitelist from `CORS_ORIGIN`, rejecting arbitrary cross-site access.

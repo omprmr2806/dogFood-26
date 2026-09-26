@@ -4,7 +4,7 @@ DOGFOOD is an open-source, self-hosted hackathon submission, judging, and commun
 
 ---
 
-## Current Project Status: Phase 3 (Hackathon Management & Registration)
+## Current Project Status: Phase 4 (Team & Membership Management)
 
 - **Completed**:
   - **Foundational Architecture**: Next.js App Router frontend, Express modular backend, PostgreSQL 16 schema.
@@ -12,13 +12,21 @@ DOGFOOD is an open-source, self-hosted hackathon submission, judging, and commun
   - **Backend-Enforced RBAC**: Centralized role guard pipeline supporting `ADMIN`, `ORGANIZER`, `JUDGE`, and `PARTICIPANT` roles with standard `401 Unauthorized` and `403 Forbidden` responses.
   - **Hackathon Lifecycle State Machine**: Backend-enforced state transitions across `DRAFT`, `OPEN`, `RUNNING`, `JUDGING`, `COMPLETED`, and `ARCHIVED`. Strict validation rejecting illegal state jumps.
   - **Participant Registration Workflow**: Backend-enforced registration rules checking event `OPEN` state, active registration time windows, and database constraint `UNIQUE(user_id, hackathon_id)`.
-  - **Organizer Management Console**: Create hackathons, edit configuration, transition lifecycle states, view participant registrations, and approve/reject/check-in attendees.
-  - **Participant Discovery & Registration Flow**: Browse public events (`/hackathons`), inspect rules/dates (`/hackathons/[slug]`), register, and view real-time registration status.
-  - **Data Privacy & IDOR Protection**: Private registration records visible only to the owning participant and authorized organizers. Public event endpoints strip private participant fields.
+  - **Team Formation & Membership System**:
+    - Database-enforced rule: A user can belong to only ONE team within the same hackathon via `UNIQUE(hackathon_id, user_id)`.
+    - Strict capacity enforcement matching `hackathon.max_team_size`.
+    - Atomic join transactions with `SELECT ... FOR UPDATE` row-level locks preventing race-condition overcapacity.
+    - Secure randomized invite codes (`DOG-XXXXXX`), case-insensitive matching, and leader-only regeneration.
+    - Full IDOR defense: Participants cannot rename, disband, or tamper with other teams.
+    - Data privacy: Invite codes and member emails are strictly omitted from public team listings.
+  - **Interactive Team Management UI**:
+    - Participant team exploration and join console (`/hackathons/[slug]/teams`).
+    - Dedicated team roster and invite code hub (`/hackathons/[slug]/my-team`).
+    - Organizer team supervision and disbandment console (`/organizer/hackathons/[id]/teams`).
   - **Security Protections**: Rate limiting, enumeration defense, session fixation protection, mass-assignment defense, and immutable audit logging.
-  - **Testing**: 56 automated unit and integration tests across hackathons, registrations, auth, RBAC, rate-limiting, and security headers.
+  - **Testing**: 77 automated unit and integration tests across 9 test suites.
 - **In Progress / Next Phase**:
-  - Phase 4: Teams & Eligibility Formation.
+  - Phase 5: Submission Workflow & Track Categories.
 
 ---
 

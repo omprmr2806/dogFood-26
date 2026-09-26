@@ -1,4 +1,4 @@
-import { UserRole, HackathonStatus, RegistrationStatus, SubmissionStatus } from './enums';
+import { UserRole, HackathonStatus, RegistrationStatus, SubmissionStatus, TeamMemberRole, TeamStatus } from './enums';
 
 export interface UserSummary {
   id: string;
@@ -46,6 +46,43 @@ export interface RegistrationDetail extends Registration {
     email: string;
     fullName: string;
   };
+}
+
+export interface TeamMember {
+  id: string;
+  teamId: string;
+  userId: string;
+  role: TeamMemberRole;
+  fullName?: string;
+  email?: string;
+  joinedAt: string;
+}
+
+export interface TeamSummary {
+  id: string;
+  hackathonId: string;
+  name: string;
+  status: TeamStatus;
+  leaderId: string;
+  leaderName?: string;
+  memberCount: number;
+  createdAt: string;
+}
+
+export interface TeamDetail {
+  id: string;
+  hackathonId: string;
+  name: string;
+  status: TeamStatus;
+  inviteCode?: string;
+  leaderId: string;
+  leaderName?: string;
+  members: TeamMember[];
+  memberCount: number;
+  minTeamSize: number;
+  maxTeamSize: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface SubmissionSummary {

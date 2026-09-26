@@ -184,6 +184,23 @@ export default function HackathonDetailPage({ params }: { params: Promise<{ slug
                 <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '0.5rem' }}>
                   Registered on {new Date(registration.registeredAt).toLocaleDateString()}
                 </div>
+                {registration.status === RegistrationStatus.ACCEPTED && (
+                  <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                    <Link
+                      href={`/hackathons/${slug}/my-team`}
+                      className="btn"
+                      style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem' }}
+                    >
+                      My Team &rarr;
+                    </Link>
+                    <Link
+                      href={`/hackathons/${slug}/teams`}
+                      style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', textDecoration: 'underline' }}
+                    >
+                      Browse All Teams
+                    </Link>
+                  </div>
+                )}
               </div>
             ) : isRegistrationOpen ? (
               <button
@@ -237,6 +254,14 @@ export default function HackathonDetailPage({ params }: { params: Promise<{ slug
               <div style={{ fontWeight: 600 }}>{new Date(hackathon.eventEnd).toLocaleDateString()}</div>
             </div>
           )}
+          <div>
+            <div style={{ color: 'var(--text-secondary)', marginBottom: '0.2rem' }}>Team Formation</div>
+            <div style={{ fontWeight: 600 }}>
+              <Link href={`/hackathons/${slug}/teams`} style={{ color: 'var(--accent-primary)', textDecoration: 'underline' }}>
+                View Teams &rarr;
+              </Link>
+            </div>
+          </div>
         </div>
 
         {/* Description Section */}

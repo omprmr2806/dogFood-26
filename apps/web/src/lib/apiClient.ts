@@ -12,7 +12,12 @@ import {
   TransitionHackathonRequest,
   Registration,
   RegistrationDetail,
-  UpdateRegistrationStatusRequest
+  UpdateRegistrationStatusRequest,
+  TeamSummary,
+  TeamDetail,
+  CreateTeamRequest,
+  UpdateTeamRequest,
+  JoinTeamRequest
 } from '@dogfood/shared';
 
 export class ApiClientError extends Error {
@@ -221,4 +226,128 @@ export async function apiUpdateRegistrationStatus(
 
   const result = await handleResponse<{ registration: Registration }>(res);
   return result.registration;
+}
+
+// ==========================================
+// TEAM APIS
+// ==========================================
+
+export async function apiGetTeams(hackathonIdOrSlug: string): Promise<TeamSummary[]> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonIdOrSlug}/teams`, {
+    method: 'GET',
+    credentials: 'include',
+    cache: 'no-store'
+  });
+
+  const result = await handleResponse<{ teams: TeamSummary[] }>(res);
+  return result.teams;
+}
+
+export async function apiGetTeam(hackathonIdOrSlug: string, teamId: string): Promise<TeamDetail> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonIdOrSlug}/teams/${teamId}`, {
+    method: 'GET',
+    credentials: 'include',
+    cache: 'no-store'
+  });
+
+  const result = await handleResponse<{ team: TeamDetail }>(res);
+  return result.team;
+}
+
+export async function apiGetMyTeam(hackathonIdOrSlug: string): Promise<TeamDetail | null> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonIdOrSlug}/my-team`, {
+    method: 'GET',
+    credentials: 'include',
+    cache: 'no-store'
+  });
+
+  const result = await handleResponse<{ team: TeamDetail | null }>(res);
+  return result.team;
+}
+
+export async function apiCreateTeam(hackathonIdOrSlug: string, data: CreateTeamRequest): Promise<TeamDetail> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonIdOrSlug}/teams`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+    credentials: 'include'
+  });
+
+  const result = await handleResponse<{ team: TeamDetail }>(res);
+  return result.team;
+}
+
+export async function apiJoinTeam(
+  hackathonIdOrSlug: string,
+  teamId: string,
+  data: JoinTeamRequest
+): Promise<TeamDetail> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonIdOrSlug}/teams/${teamId}/join`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+    credentials: 'include'
+  });
+
+  const result = await handleResponse<{ team: TeamDetail }>(res);
+  return result.team;
+}
+
+export async function apiUpdateTeam(
+  hackathonIdOrSlug: string,
+  teamId: string,
+  data: UpdateTeamRequest
+): Promise<TeamDetail> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonIdOrSlug}/teams/${teamId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+    credentials: 'include'
+  });
+
+  const result = await handleResponse<{ team: TeamDetail }>(res);
+  return result.team;
+}
+
+export async function apiLeaveTeam(hackathonIdOrSlug: string, teamId: string): Promise<{ message: string }> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonIdOrSlug}/teams/${teamId}/leave`, {
+    method: 'POST',
+    credentials: 'include'
+  });
+
+  return await handleResponse<{ message: string }>(res);
+}
+
+export async function apiRemoveMember(
+  hackathonIdOrSlug: string,
+  teamId: string,
+  userId: string
+): Promise<{ message: string }> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonIdOrSlug}/teams/${teamId}/members/${userId}`, {
+    method: 'DELETE',
+    credentials: 'include'
+  });
+
+  return await handleResponse<{ message: string }>(res);
+}
+
+export async function apiRegenerateInviteCode(
+  hackathonIdOrSlug: string,
+  teamId: string
+): Promise<{ inviteCode: string }> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonIdOrSlug}/teams/${teamId}/invite-code/regenerate`, {
+    method: 'POST',
+    credentials: 'include'
+  });
+
+  return await handleResponse<{ inviteCode: string }>(res);
+}
+
+export async function apiDisbandTeam(hackathonIdOrSlug: string, teamId: string): Promise<{ message: string }> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonIdOrSlug}/teams/${teamId}`, {
+    method: 'DELETE',
+    credentials: 'include'
+  });
+
+  return await handleResponse<{ message: string }>(res);
 }

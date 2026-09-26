@@ -112,9 +112,20 @@ export default function DashboardPage() {
           )}
           {user.role === 'PARTICIPANT' && (
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', lineHeight: '1.5' }}>
-              Participant workspace. Form teams, submit hackathon projects, and cast community votes.
+              Participant workspace. Register for hackathons, form teams, and manage rosters.
             </p>
           )}
+
+          <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+            <Link href="/hackathons" className="btn" style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem' }}>
+              Explore Hackathons &amp; Teams &rarr;
+            </Link>
+            {(user.role === 'ORGANIZER' || user.role === 'ADMIN') && (
+              <Link href="/organizer/hackathons" className="btn" style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem', background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)' }}>
+                Organizer Console &rarr;
+              </Link>
+            )}
+          </div>
         </div>
 
         {/* Live RBAC Permission Verification Tester */}

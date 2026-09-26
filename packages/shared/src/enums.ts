@@ -26,6 +26,12 @@ export enum TeamMemberRole {
   MEMBER = 'MEMBER'
 }
 
+export enum TeamStatus {
+  ACTIVE = 'ACTIVE',
+  LOCKED = 'LOCKED',
+  DISBANDED = 'DISBANDED'
+}
+
 export enum SubmissionStatus {
   DRAFT = 'DRAFT',
   SUBMITTED = 'SUBMITTED',

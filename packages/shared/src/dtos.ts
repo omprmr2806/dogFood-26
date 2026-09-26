@@ -92,3 +92,21 @@ export interface CreateRegistrationRequest {
 export interface UpdateRegistrationStatusRequest {
   status: RegistrationStatus;
 }
+
+// Team DTOs
+export interface CreateTeamRequest {
+  name: string;
+}
+
+export interface UpdateTeamRequest {
+  name?: string;
+}
+
+export interface JoinTeamRequest {
+  inviteCode: string;
+}
+
+export interface AddTeamMemberRequest {
+  userId: string;
+  role?: string;
+}

@@ -171,7 +171,18 @@ export default function EditHackathonPage({ params }: { params: Promise<{ id: st
         <Link href="/organizer/hackathons" style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
           &larr; Back to Organizer Dashboard
         </Link>
-        <div style={{ display: 'flex', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <Link
+            href={`/organizer/hackathons/${hackathon.id}/teams`}
+            className="btn"
+            style={{
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border-subtle)',
+              fontSize: '0.85rem'
+            }}
+          >
+            Teams
+          </Link>
           <Link
             href={`/organizer/hackathons/${hackathon.id}/registrations`}
             className="btn"
@@ -181,14 +192,14 @@ export default function EditHackathonPage({ params }: { params: Promise<{ id: st
               fontSize: '0.85rem'
             }}
           >
-            View Registrations ({hackathon.registrationCount})
+            Registrations ({hackathon.registrationCount})
           </Link>
           <Link
             href={`/hackathons/${hackathon.slug}`}
             className="btn"
             style={{ fontSize: '0.85rem' }}
           >
-            Public Event Page &rarr;
+            Public Page &rarr;
           </Link>
         </div>
       </div>

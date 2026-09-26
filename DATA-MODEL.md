@@ -99,12 +99,43 @@ Participant registration applications and attendance states for an event.
 
 ---
 
-## 3. Future Phases Schema Preview (Phases 4–10)
+### Phase 4 Tables (Teams & Memberships)
+
+#### `teams`
+Participant teams established for a specific hackathon.
+- `id` (UUID PRIMARY KEY DEFAULT uuid_generate_v4())
+- `hackathon_id` (UUID NOT NULL REFERENCES hackathons(id) ON DELETE CASCADE)
+- `name` (VARCHAR(100) NOT NULL)
+- `invite_code` (VARCHAR(32) NOT NULL UNIQUE)
+- `created_by` (UUID REFERENCES users(id) ON DELETE SET NULL)
+- `leader_id` (UUID NOT NULL REFERENCES users(id) ON DELETE RESTRICT)
+- `status` (VARCHAR(32) NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'LOCKED', 'DISBANDED')))
+- `created_at` (TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)
+- `updated_at` (TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)
+- **Constraints**: `UNIQUE (id, hackathon_id)` - Composite key required for foreign key enforcement in `team_members`.
+- **Indexes**: `idx_teams_hackathon_id`, `idx_teams_invite_code` (UNIQUE), `idx_teams_leader_id`, `idx_teams_status`
+
+#### `team_members`
+Individual user assignments to teams, strictly guaranteeing one team per participant per hackathon at the PostgreSQL layer.
+- `id` (UUID PRIMARY KEY DEFAULT uuid_generate_v4())
+- `team_id` (UUID NOT NULL)
+- `hackathon_id` (UUID NOT NULL)
+- `user_id` (UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE)
+- `role` (VARCHAR(32) NOT NULL DEFAULT 'MEMBER' CHECK (role IN ('LEADER', 'MEMBER')))
+- `joined_at` (TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)
+- `created_at` (TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)
+- **Constraints**:
+  - `CONSTRAINT fk_team_members_team_hackathon FOREIGN KEY (team_id, hackathon_id) REFERENCES teams(id, hackathon_id) ON DELETE CASCADE`
+  - `CONSTRAINT uq_hackathon_user UNIQUE (hackathon_id, user_id)` - Physical database guarantee preventing a user from joining multiple teams in the same hackathon.
+  - `CONSTRAINT uq_team_user UNIQUE (team_id, user_id)` - Redundant uniqueness per team.
+- **Indexes**: `idx_team_members_team_id`, `idx_team_members_user_id`, `idx_team_members_hackathon_user` (UNIQUE)
+
+---
+
+## 3. Future Phases Schema Preview (Phases 5–10)
 
 | Table | Purpose |
 | :--- | :--- |
-| `teams` | Participant teams, invite codes, and hackathon association |
-| `team_members` | Membership records enforcing one team per participant per event |
 | `submissions` | Project submissions, repository links, descriptions, and media |
 | `rubrics` | Judging rubric configurations |
 | `rubric_criteria` | Evaluation criteria with percentage weights and maximum score points |
