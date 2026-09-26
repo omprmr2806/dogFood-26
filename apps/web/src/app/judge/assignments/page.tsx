@@ -263,6 +263,16 @@ export default function JudgeAssignmentsPage() {
 
                 <div className="flex items-center gap-3 shrink-0">
                   <Link
+                    href={`/judge/evaluate/${a.id}`}
+                    className={`px-4 py-2 rounded-lg text-xs font-bold transition shadow-sm ${
+                      a.status === 'COMPLETED'
+                        ? 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-slate-700'
+                        : 'bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold'
+                    }`}
+                  >
+                    {a.status === 'COMPLETED' ? 'Review Score' : 'Evaluate & Score →'}
+                  </Link>
+                  <Link
                     href={`/gallery/${a.submissionId}`}
                     className="px-4 py-2 border border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-xs font-semibold hover:bg-gray-100 dark:hover:bg-gray-800 transition"
                   >

@@ -38,6 +38,13 @@ import {
   DeclareConflictRequest,
   GenerateAssignmentsRequest,
   FinalizeAssignmentsRequest,
+  Rubric,
+  JudgeEvaluation,
+  OrganizerJudgingMonitor,
+  CreateRubricRequest,
+  UpdateRubricRequest,
+  SaveEvaluationDraftRequest,
+  SubmitEvaluationRequest,
   JudgeStatus
 } from '@dogfood/shared';
 
@@ -649,4 +656,109 @@ export async function apiGetMyAssignmentDetail(
     credentials: 'include'
   });
   return await handleResponse<any>(res);
+}
+
+// ==========================================
+// PHASE 7: RUBRICS & JUDGING CONSOLE APIS
+// ==========================================
+
+export async function apiGetHackathonRubric(hackathonId: string): Promise<Rubric> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonId}/rubric`, {
+    method: 'GET',
+    credentials: 'include',
+    cache: 'no-store'
+  });
+  return await handleResponse<Rubric>(res);
+}
+
+export async function apiCreateHackathonRubric(
+  hackathonId: string,
+  data: CreateRubricRequest
+): Promise<Rubric> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonId}/rubric`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+    credentials: 'include'
+  });
+  return await handleResponse<Rubric>(res);
+}
+
+export async function apiUpdateRubric(
+  rubricId: string,
+  data: UpdateRubricRequest
+): Promise<Rubric> {
+  const res = await fetch(`${frontendEnv.apiUrl}/rubrics/${rubricId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+    credentials: 'include'
+  });
+  return await handleResponse<Rubric>(res);
+}
+
+export async function apiGetAssignmentEvaluation(
+  assignmentId: string
+): Promise<{
+  assignment: any;
+  rubric: Rubric;
+  evaluation: JudgeEvaluation | null;
+}> {
+  const res = await fetch(`${frontendEnv.apiUrl}/assignments/${assignmentId}/evaluation`, {
+    method: 'GET',
+    credentials: 'include',
+    cache: 'no-store'
+  });
+  return await handleResponse<{
+    assignment: any;
+    rubric: Rubric;
+    evaluation: JudgeEvaluation | null;
+  }>(res);
+}
+
+export async function apiSaveEvaluationDraft(
+  assignmentId: string,
+  data: SaveEvaluationDraftRequest
+): Promise<JudgeEvaluation> {
+  const res = await fetch(`${frontendEnv.apiUrl}/assignments/${assignmentId}/evaluation/draft`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+    credentials: 'include'
+  });
+  return await handleResponse<JudgeEvaluation>(res);
+}
+
+export async function apiSubmitEvaluation(
+  assignmentId: string,
+  data: SubmitEvaluationRequest
+): Promise<JudgeEvaluation> {
+  const res = await fetch(`${frontendEnv.apiUrl}/assignments/${assignmentId}/evaluation/submit`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+    credentials: 'include'
+  });
+  return await handleResponse<JudgeEvaluation>(res);
+}
+
+export async function apiUnlockEvaluation(
+  assignmentId: string
+): Promise<JudgeEvaluation> {
+  const res = await fetch(`${frontendEnv.apiUrl}/assignments/${assignmentId}/evaluation/unlock`, {
+    method: 'POST',
+    credentials: 'include'
+  });
+  return await handleResponse<JudgeEvaluation>(res);
+}
+
+export async function apiGetOrganizerJudgingMonitor(
+  hackathonId: string
+): Promise<OrganizerJudgingMonitor> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonId}/judging-monitor`, {
+    method: 'GET',
+    credentials: 'include',
+    cache: 'no-store'
+  });
+  return await handleResponse<OrganizerJudgingMonitor>(res);
 }

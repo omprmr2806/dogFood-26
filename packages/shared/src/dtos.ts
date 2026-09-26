@@ -212,3 +212,46 @@ export interface FinalizeAssignmentsRequest {
   forceRegenerate?: boolean;
   confirmRegenerate?: boolean;
 }
+
+// ==========================================
+// PHASE 7: RUBRICS & JUDGE EVALUATIONS DTOS
+// ==========================================
+
+export interface RubricCriterionInput {
+  id?: string;
+  name: string;
+  description: string;
+  weightPercentage: number;
+  maxPoints: number;
+  displayOrder?: number;
+}
+
+export interface CreateRubricRequest {
+  name: string;
+  description?: string;
+  isActive?: boolean;
+  criteria: RubricCriterionInput[];
+}
+
+export interface UpdateRubricRequest {
+  name?: string;
+  description?: string;
+  isActive?: boolean;
+  criteria?: RubricCriterionInput[];
+}
+
+export interface CriterionScoreInput {
+  criterionId: string;
+  score: number;
+  feedback?: string;
+}
+
+export interface SaveEvaluationDraftRequest {
+  scores: CriterionScoreInput[];
+  feedback?: string;
+}
+
+export interface SubmitEvaluationRequest {
+  scores: CriterionScoreInput[];
+  feedback?: string;
+}

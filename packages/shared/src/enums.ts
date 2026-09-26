@@ -52,3 +52,9 @@ export enum JudgeAssignmentStatus {
   COMPLETED = 'COMPLETED',
   REVOKED = 'REVOKED'
 }
+
+export enum EvaluationStatus {
+  DRAFT = 'DRAFT',
+  SUBMITTED = 'SUBMITTED',
+  LOCKED = 'LOCKED'
+}

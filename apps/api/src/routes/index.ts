@@ -7,6 +7,7 @@ import { teamRoutes } from './team.routes';
 import submissionRoutes from './submission.routes';
 import galleryRoutes from './gallery.routes';
 import judgeRoutes from './judge.routes';
+import rubricRoutes from './rubric.routes';
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use(teamRoutes);
 router.use(submissionRoutes);
 router.use(galleryRoutes);
 router.use(judgeRoutes);
+router.use(rubricRoutes);
 
 export const apiRouter = router;

@@ -1,4 +1,4 @@
-import { UserRole, HackathonStatus, RegistrationStatus, SubmissionStatus, TeamMemberRole, TeamStatus, JudgeAssignmentStatus, JudgeStatus } from './enums';
+import { UserRole, HackathonStatus, RegistrationStatus, SubmissionStatus, TeamMemberRole, TeamStatus, JudgeAssignmentStatus, JudgeStatus, EvaluationStatus } from './enums';
 
 export interface UserSummary {
   id: string;
@@ -202,5 +202,86 @@ export interface AssignmentPreviewResult {
     title: string;
     assignedCount: number;
     reason: string;
+  }[];
+}
+
+// ==========================================
+// PHASE 7: RUBRICS & JUDGE EVALUATIONS
+// ==========================================
+
+export interface RubricCriterion {
+  id: string;
+  rubricId: string;
+  name: string;
+  description: string;
+  weightPercentage: number;
+  maxPoints: number;
+  displayOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Rubric {
+  id: string;
+  hackathonId: string;
+  name: string;
+  description?: string;
+  isActive: boolean;
+  criteria: RubricCriterion[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CriterionScore {
+  id: string;
+  evaluationId: string;
+  criterionId: string;
+  criterionName?: string;
+  score: number;
+  maxPoints?: number;
+  weightPercentage?: number;
+  feedback?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface JudgeEvaluation {
+  id: string;
+  hackathonId: string;
+  assignmentId: string;
+  submissionId: string;
+  submissionTitle?: string;
+  judgeId: string;
+  judgeName?: string;
+  rubricId: string;
+  rawWeightedScore: number;
+  feedback?: string;
+  status: EvaluationStatus;
+  criterionScores: CriterionScore[];
+  submittedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface OrganizerJudgingMonitor {
+  hackathonId: string;
+  totalAssignments: number;
+  completedEvaluations: number;
+  draftEvaluations: number;
+  pendingEvaluations: number;
+  completionPercentage: number;
+  judgeProgress: {
+    judgeId: string;
+    judgeName: string;
+    assignedCount: number;
+    completedCount: number;
+    completionPercentage: number;
+  }[];
+  submissionProgress: {
+    submissionId: string;
+    submissionTitle: string;
+    assignedCount: number;
+    completedCount: number;
+    completionPercentage: number;
   }[];
 }
