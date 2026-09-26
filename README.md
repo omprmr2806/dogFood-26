@@ -4,7 +4,7 @@ DOGFOOD is an open-source, self-hosted hackathon submission, judging, and commun
 
 ---
 
-## Current Project Status: Phase 5 (Submissions + Public Project Gallery)
+## Current Project Status: Phase 6 (Judge Management + Automated Judge Assignment)
 
 - **Completed**:
   - **Foundational Architecture**: Next.js App Router frontend, Express modular backend, PostgreSQL 16 schema.
@@ -22,15 +22,22 @@ DOGFOOD is an open-source, self-hosted hackathon submission, judging, and commun
   - **Submissions & Public Project Gallery**:
     - Relational integrity: Exactly one submission per team enforced at the PostgreSQL layer via `UNIQUE(team_id)` and composite FK `(team_id, hackathon_id) REFERENCES teams(id, hackathon_id)`.
     - Submission Versioning: Immutable audit snapshotting in `submission_versions` capturing project content at submission.
-    - URL Scheme Security: Strictly whitelisted `http://` and `https://` schemes; rejected `javascript:`, `data:`, `file:`, `ftp:`. 100% offline with zero server-side external fetches (eliminates SSRF).
+    - URL Scheme Security: Strictly whitelisted `http://` and `https://` schemes; rejected `javascript:`, `data:`, `file:`, `ftp:`. 100% offline with zero server-side external fetches (SSRF immunity).
     - Event State Locking: Participant edits strictly blocked once hackathon enters `JUDGING`, `COMPLETED`, or `ARCHIVED` status.
-    - Public Project Gallery (`/gallery`, `/gallery/[id]`): Server-side search, technology filtering, pagination, and privacy boundaries (drafts strictly excluded).
+    - Public Project Gallery (`/gallery`, `/gallery/[id]`): Server-side search, technology filtering, pagination, and privacy boundaries.
     - Participant Submission Workspace (`/hackathons/[slug]/submission`): Form drafting, auto-save, URL validation, and confirmation submission workflow.
     - Organizer Submission Supervision (`/organizer/hackathons/[id]/submissions`): Live metrics, submission rosters, and administrative status controls.
+  - **Judge Management & Automated Judge Assignment (Phase 6)**:
+    - **Event-Specific Judge Participation**: Scoped authorization via `hackathon_judges`; role `JUDGE` alone grants zero cross-event access without active enrollment.
+    - **Conflict of Interest (COI) Prevention**: Backend-enforced exclusion for structural team membership (`team_members`) and declared advisor/personal conflicts (`judge_conflicts`).
+    - **Deterministic Workload Balancer (`JudgeAssignmentService`)**: Pure deterministic algorithm minimizing workload variance across active judges; zero duplicate assignments; safe failure reporting exact unassignable submissions.
+    - **Preview & Transactional Finalization**: Safe in-memory preview calculation; atomic multi-step PostgreSQL transaction (`BEGIN ... COMMIT`) for finalization; safe regeneration requiring explicit overwrite confirmation.
+    - **Judge Portal & Assigned Queue (`/judge/assignments`)**: Dedicated view of assigned submissions with IDOR protection (`assignment.judge_id === req.user.id`) and participant privacy boundaries.
+    - **Organizer Judging Console (`/organizer/hackathons/[id]/judges`)**: Judge roster, activation/deactivation, COI manager, preview generator, and finalization workflow.
   - **Security Protections**: Rate limiting, enumeration defense, session fixation protection, mass-assignment defense, and immutable audit logging.
-  - **Testing**: 102 automated unit and integration tests across 10 test suites.
+  - **Testing**: 121 automated unit and integration tests across 11 test suites passing (100% passing).
 - **In Progress / Next Phase**:
-  - Phase 6: Judges, Evaluation Criteria & Rubrics.
+  - Phase 7: Judging Rubrics, Criterion Scoring & Score Normalization.
 
 ---
 
@@ -43,6 +50,11 @@ The platform includes deterministic, seeded demo accounts for each role to facil
 | **ADMIN** | `admin@dogfood.local` | `AdminPass123!` | System configuration, user management, unrestricted platform access |
 | **ORGANIZER** | `organizer@dogfood.local` | `OrganizerPass123!` | Hackathon configuration, criteria rubrics, judge assignment runs, ranking |
 | **JUDGE** | `judge@dogfood.local` | `JudgePass123!` | Evaluation console, assigned submissions queue, criteria scoring |
+| **JUDGE (Alice)** | `judge.alice@dogfood.local` | `JudgePass123!` | Algorithm specialist judge; active in `ai-agents-blitz-2026` |
+| **JUDGE (Bob)** | `judge.bob@dogfood.local` | `JudgePass123!` | Benchmark specialist judge; active in `ai-agents-blitz-2026` |
+| **JUDGE (Charlie)** | `judge.charlie@dogfood.local` | `JudgePass123!` | Systems judge; active in `ai-agents-blitz-2026` |
+| **JUDGE (Diana)** | `judge.diana@dogfood.local` | `JudgePass123!` | Inactive judge (demonstrates exclusion from assignment pool) |
+| **JUDGE (Conflict)** | `judge.conflict@dogfood.local` | `JudgePass123!` | Judge who belongs to Team 4 (demonstrates COI exclusion) |
 | **PARTICIPANT** | `participant@dogfood.local` | `ParticipantPass123!` | Team creation/joining, project submissions, community voting |
 
 *Note: Demo passwords are stored strictly as Argon2id hashes in PostgreSQL.*

@@ -41,8 +41,14 @@ export enum SubmissionStatus {
   DISQUALIFIED = 'DISQUALIFIED'
 }
 
+export enum JudgeStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE'
+}
+
 export enum JudgeAssignmentStatus {
   ASSIGNED = 'ASSIGNED',
   IN_PROGRESS = 'IN_PROGRESS',
-  COMPLETED = 'COMPLETED'
+  COMPLETED = 'COMPLETED',
+  REVOKED = 'REVOKED'
 }

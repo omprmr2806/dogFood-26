@@ -171,12 +171,64 @@ Immutable version snapshots captured at submission or major milestone for auditi
 
 ---
 
-## 3. Future Phases Schema Preview (Phases 6–10)
+### Phase 6 Tables (Judge Management & Automated Assignment)
+
+#### `hackathon_judges`
+Event-specific judge participation roster.
+- `id` (UUID PRIMARY KEY DEFAULT uuid_generate_v4())
+- `hackathon_id` (UUID NOT NULL REFERENCES hackathons(id) ON DELETE CASCADE)
+- `judge_id` (UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE)
+- `status` (VARCHAR(32) NOT NULL DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'INACTIVE')))
+- `created_at` (TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)
+- `updated_at` (TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)
+- **Constraints**: `CONSTRAINT uq_hackathon_judge UNIQUE (hackathon_id, judge_id)`
+- **Indexes**: `idx_hackathon_judges_hackathon_id`, `idx_hackathon_judges_judge_id`, `idx_hackathon_judges_status`
+
+#### `hackathon_judging_configs`
+Configures event-specific evaluation density ($K$ judges per submission) and tracks assignment finalization status.
+- `hackathon_id` (UUID PRIMARY KEY REFERENCES hackathons(id) ON DELETE CASCADE)
+- `judges_per_submission` (INTEGER NOT NULL DEFAULT 2 CHECK (judges_per_submission >= 1))
+- `assignments_finalized` (BOOLEAN NOT NULL DEFAULT FALSE)
+- `finalized_at` (TIMESTAMP WITH TIME ZONE)
+- `created_at` (TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)
+- `updated_at` (TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)
+
+#### `judge_conflicts`
+Explicit records of conflict of interest (COI) barring specific judges from evaluating specific submissions or teams.
+- `id` (UUID PRIMARY KEY DEFAULT uuid_generate_v4())
+- `hackathon_id` (UUID NOT NULL REFERENCES hackathons(id) ON DELETE CASCADE)
+- `judge_id` (UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE)
+- `team_id` (UUID REFERENCES teams(id) ON DELETE CASCADE)
+- `submission_id` (UUID REFERENCES submissions(id) ON DELETE CASCADE)
+- `reason` (TEXT NOT NULL)
+- `created_at` (TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)
+- **Indexes**: `idx_judge_conflicts_hackathon_id`, `idx_judge_conflicts_judge_id`
+
+#### `judge_assignments`
+Authoritative project evaluation assignments allocated to judges for an event.
+- `id` (UUID PRIMARY KEY DEFAULT uuid_generate_v4())
+- `hackathon_id` (UUID NOT NULL REFERENCES hackathons(id) ON DELETE CASCADE)
+- `submission_id` (UUID NOT NULL REFERENCES submissions(id) ON DELETE CASCADE)
+- `judge_id` (UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE)
+- `status` (VARCHAR(32) NOT NULL DEFAULT 'ASSIGNED' CHECK (status IN ('ASSIGNED', 'IN_PROGRESS', 'COMPLETED', 'REVOKED')))
+- `is_final` (BOOLEAN NOT NULL DEFAULT FALSE)
+- `assigned_at` (TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)
+- `finalized_at` (TIMESTAMP WITH TIME ZONE)
+- `created_at` (TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)
+- `updated_at` (TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)
+- **Constraints**:
+  - `CONSTRAINT uq_judge_submission UNIQUE (submission_id, judge_id)` - Prevents assigning the same submission to a judge more than once.
+  - `CONSTRAINT fk_judge_assignment_sub_hack FOREIGN KEY (submission_id, hackathon_id) REFERENCES submissions(id, hackathon_id) ON DELETE CASCADE`
+  - `CONSTRAINT fk_judge_assignment_judge_hack FOREIGN KEY (hackathon_id, judge_id) REFERENCES hackathon_judges(hackathon_id, judge_id) ON DELETE CASCADE`
+- **Indexes**: `idx_judge_assignments_hackathon_id`, `idx_judge_assignments_submission_id`, `idx_judge_assignments_judge_id`, `idx_judge_assignments_status`, `idx_judge_assignments_is_final`
+
+---
+
+## 3. Future Phases Schema Preview (Phases 7–10)
 
 | Table | Purpose |
 | :--- | :--- |
 | `rubrics` | Judging rubric configurations |
 | `rubric_criteria` | Evaluation criteria with percentage weights and maximum score points |
-| `judge_assignments`| Workload-balanced evaluation allocations avoiding conflicts of interest |
 | `judge_scores` | Normalized and raw scores per assignment and criteria |
 | `community_votes` | Public votes with deduplication and self-voting restrictions |

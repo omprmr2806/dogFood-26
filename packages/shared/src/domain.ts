@@ -1,4 +1,4 @@
-import { UserRole, HackathonStatus, RegistrationStatus, SubmissionStatus, TeamMemberRole, TeamStatus } from './enums';
+import { UserRole, HackathonStatus, RegistrationStatus, SubmissionStatus, TeamMemberRole, TeamStatus, JudgeAssignmentStatus, JudgeStatus } from './enums';
 
 export interface UserSummary {
   id: string;
@@ -131,4 +131,76 @@ export interface SubmissionVersion {
   snapshotData: Record<string, unknown>;
   createdBy?: string;
   createdAt: string;
+}
+
+// ==========================================
+// PHASE 6: JUDGE MANAGEMENT & ASSIGNMENTS
+// ==========================================
+
+export interface HackathonJudge {
+  id: string;
+  hackathonId: string;
+  judgeId: string;
+  judgeEmail: string;
+  judgeFullName: string;
+  status: JudgeStatus;
+  assignedCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface JudgingConfig {
+  hackathonId: string;
+  judgesPerSubmission: number;
+  assignmentsFinalized: boolean;
+  finalizedAt?: string;
+  updatedAt: string;
+}
+
+export interface JudgeConflict {
+  id: string;
+  hackathonId: string;
+  judgeId: string;
+  judgeName?: string;
+  teamId?: string;
+  teamName?: string;
+  submissionId?: string;
+  submissionTitle?: string;
+  reason: string;
+  createdAt: string;
+}
+
+export interface JudgeAssignmentItem {
+  id: string;
+  hackathonId: string;
+  hackathonName?: string;
+  submissionId: string;
+  submissionTitle: string;
+  submissionTagline?: string;
+  teamId: string;
+  teamName: string;
+  judgeId: string;
+  judgeName: string;
+  status: JudgeAssignmentStatus;
+  isFinal: boolean;
+  assignedAt: string;
+  finalizedAt?: string;
+  repoUrl?: string;
+  demoUrl?: string;
+}
+
+export interface AssignmentPreviewResult {
+  totalEligibleSubmissions: number;
+  totalActiveJudges: number;
+  judgesPerSubmission: number;
+  totalAssignments: number;
+  assignments: JudgeAssignmentItem[];
+  workloadDistribution: { judgeId: string; judgeName: string; count: number }[];
+  conflictsAvoided: number;
+  unassignableSubmissions: {
+    submissionId: string;
+    title: string;
+    assignedCount: number;
+    reason: string;
+  }[];
 }

@@ -523,6 +523,24 @@ export class TeamRepository {
     const updated = await this.updateTeam(id, { status: TeamStatus.DISBANDED });
     return !!updated;
   }
+
+  async getTeamMembersForHackathon(hackathonId: string): Promise<Array<{ team_id: string; user_id: string }>> {
+    const isDbConnected = await checkDatabaseHealth();
+    if (isDbConnected) {
+      const res = await dbPool.query<{ team_id: string; user_id: string }>(
+        'SELECT team_id, user_id FROM team_members WHERE hackathon_id = $1',
+        [hackathonId]
+      );
+      return res.rows;
+    }
+    const list: Array<{ team_id: string; user_id: string }> = [];
+    for (const m of this.inMemoryMembers.values()) {
+      if (m.hackathon_id === hackathonId) {
+        list.push({ team_id: m.team_id, user_id: m.user_id });
+      }
+    }
+    return list;
+  }
 }
 
 export const teamRepository = new TeamRepository();

@@ -6,6 +6,7 @@ import { hackathonRoutes } from './hackathon.routes';
 import { teamRoutes } from './team.routes';
 import submissionRoutes from './submission.routes';
 import galleryRoutes from './gallery.routes';
+import judgeRoutes from './judge.routes';
 
 const router = Router();
 
@@ -16,5 +17,6 @@ router.use(hackathonRoutes);
 router.use(teamRoutes);
 router.use(submissionRoutes);
 router.use(galleryRoutes);
+router.use(judgeRoutes);
 
 export const apiRouter = router;

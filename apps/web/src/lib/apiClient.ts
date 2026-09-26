@@ -26,8 +26,21 @@ import {
   GalleryResponse,
   GalleryItem,
   GalleryQuery,
-  SubmissionStatus
+  SubmissionStatus,
+  HackathonJudge,
+  JudgingConfig,
+  JudgeConflict,
+  JudgeAssignmentItem,
+  AssignmentPreviewResult,
+  AddJudgeRequest,
+  UpdateJudgeStatusRequest,
+  UpdateJudgingConfigRequest,
+  DeclareConflictRequest,
+  GenerateAssignmentsRequest,
+  FinalizeAssignmentsRequest,
+  JudgeStatus
 } from '@dogfood/shared';
+
 
 export class ApiClientError extends Error {
   constructor(
@@ -477,4 +490,163 @@ export async function apiGetGalleryProject(id: string): Promise<SubmissionDetail
   });
 
   return await handleResponse<SubmissionDetail>(res);
+}
+
+// ==========================================
+// PHASE 6: JUDGE MANAGEMENT & ASSIGNMENTS
+// ==========================================
+
+export async function apiListHackathonJudges(hackathonId: string): Promise<HackathonJudge[]> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonId}/judges`, {
+    method: 'GET',
+    credentials: 'include'
+  });
+  return await handleResponse<HackathonJudge[]>(res);
+}
+
+export async function apiGetAvailableJudges(
+  hackathonId: string
+): Promise<{ availableUsers: Array<{ id: string; email: string; fullName: string; isEnrolled: boolean }> }> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonId}/judges/available`, {
+    method: 'GET',
+    credentials: 'include'
+  });
+  return await handleResponse<{ availableUsers: Array<{ id: string; email: string; fullName: string; isEnrolled: boolean }> }>(res);
+}
+
+export async function apiAddHackathonJudge(hackathonId: string, data: AddJudgeRequest): Promise<HackathonJudge> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonId}/judges`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+    credentials: 'include'
+  });
+  return await handleResponse<HackathonJudge>(res);
+}
+
+export async function apiUpdateJudgeStatus(
+  hackathonId: string,
+  judgeId: string,
+  status: JudgeStatus
+): Promise<HackathonJudge> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonId}/judges/${judgeId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status }),
+    credentials: 'include'
+  });
+  return await handleResponse<HackathonJudge>(res);
+}
+
+export async function apiRemoveHackathonJudge(hackathonId: string, judgeId: string): Promise<void> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonId}/judges/${judgeId}`, {
+    method: 'DELETE',
+    credentials: 'include'
+  });
+  await handleResponse<{ message: string }>(res);
+}
+
+export async function apiGetJudgingConfig(hackathonId: string): Promise<JudgingConfig> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonId}/judging/config`, {
+    method: 'GET',
+    credentials: 'include'
+  });
+  return await handleResponse<JudgingConfig>(res);
+}
+
+export async function apiUpdateJudgingConfig(
+  hackathonId: string,
+  data: UpdateJudgingConfigRequest
+): Promise<JudgingConfig> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonId}/judging/config`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+    credentials: 'include'
+  });
+  return await handleResponse<JudgingConfig>(res);
+}
+
+export async function apiListJudgeConflicts(hackathonId: string): Promise<JudgeConflict[]> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonId}/judging/conflicts`, {
+    method: 'GET',
+    credentials: 'include'
+  });
+  return await handleResponse<JudgeConflict[]>(res);
+}
+
+export async function apiDeclareJudgeConflict(
+  hackathonId: string,
+  data: DeclareConflictRequest
+): Promise<JudgeConflict> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonId}/judging/conflicts`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+    credentials: 'include'
+  });
+  return await handleResponse<JudgeConflict>(res);
+}
+
+export async function apiRemoveJudgeConflict(hackathonId: string, conflictId: string): Promise<void> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonId}/judging/conflicts/${conflictId}`, {
+    method: 'DELETE',
+    credentials: 'include'
+  });
+  await handleResponse<{ message: string }>(res);
+}
+
+export async function apiPreviewAssignments(
+  hackathonId: string,
+  data?: GenerateAssignmentsRequest
+): Promise<AssignmentPreviewResult> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonId}/judging/assignments/preview`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data || {}),
+    credentials: 'include'
+  });
+  return await handleResponse<AssignmentPreviewResult>(res);
+}
+
+export async function apiFinalizeAssignments(
+  hackathonId: string,
+  data: FinalizeAssignmentsRequest
+): Promise<{ success: boolean; totalAssignments: number; message: string }> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonId}/judging/assignments/finalize`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+    credentials: 'include'
+  });
+  return await handleResponse<{ success: boolean; totalAssignments: number; message: string }>(res);
+}
+
+export async function apiListHackathonAssignments(hackathonId: string): Promise<JudgeAssignmentItem[]> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonId}/judging/assignments`, {
+    method: 'GET',
+    credentials: 'include'
+  });
+  return await handleResponse<JudgeAssignmentItem[]>(res);
+}
+
+export async function apiGetMyJudgeAssignments(
+  hackathonId: string
+): Promise<{ assignments: JudgeAssignmentItem[]; stats: { total: number; completed: number; pending: number } }> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonId}/judge/my-assignments`, {
+    method: 'GET',
+    credentials: 'include'
+  });
+  return await handleResponse<{ assignments: JudgeAssignmentItem[]; stats: { total: number; completed: number; pending: number } }>(res);
+}
+
+export async function apiGetMyAssignmentDetail(
+  hackathonId: string,
+  assignmentId: string
+): Promise<any> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonId}/judge/assignments/${assignmentId}`, {
+    method: 'GET',
+    credentials: 'include'
+  });
+  return await handleResponse<any>(res);
 }

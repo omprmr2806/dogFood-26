@@ -24,7 +24,17 @@ Security is a first-class requirement in the DOGFOOD platform:
 | **Clickjacking / MIME Sniffing** | Helmet `X-Frame-Options: SAMEORIGIN` and `X-Content-Type-Options: nosniff`. |
 | **CORS Abuse** | Strict whitelist matching `CORS_ORIGIN`; wildcard origins rejected. |
 | **Denial of Service (DoS)** | Request body parsing capped at `100kb` (`BODY_SIZE_LIMIT`). |
-| **Audit Trail** | Immutable `audit_logs` tracking `AUTH_REGISTER`, `AUTH_LOGIN_SUCCESS`, `AUTH_LOGIN_FAILED`, and `AUTH_LOGOUT`. |
+| **Audit Trail** | Immutable `audit_logs` tracking auth, hackathon state transitions, team changes, submissions, and judge assignments. |
+| **Illegal Event Transitions** | Finite state machine rejecting non-adjacent or backward status transitions. |
+| **Team Overcapacity Race** | Atomic `SELECT ... FOR UPDATE` row locks inside PostgreSQL transactions. |
+| **Team Membership Spoofing** | Database `UNIQUE(hackathon_id, user_id)` constraint; users cannot join multiple teams. |
+| **Submission Tampering (IDOR)** | Ownership verified against active team roster; edits blocked when hackathon enters `JUDGING`. |
+| **Server-Side Request Forgery** | Zero server-side URL fetches; external links validated for strict `http(s)` protocol and rendered client-only. |
+| **Cross-Hackathon Judge Abuse** | Event-specific judge enrollment in `hackathon_judges`; role `JUDGE` alone grants zero access without active event enrollment. |
+| **Conflict of Interest (COI)** | Structural team membership checking plus explicit organizer COI declarations; verified on preview, finalization, and direct submission inspection. |
+| **Judge Queue Tampering (IDOR)** | Endpoint `/judge/assignments/:assignmentId` verifies `assignment.judge_id === req.user.id`; returns `403 FORBIDDEN` for other judges' records. |
+| **Broken Assignment Transactions** | Multi-table finalization executed in a single atomic SQL transaction (`BEGIN ... COMMIT`); zero orphaned or half-created assignments. |
+| **Participant Privacy Exposure** | Judge DTOs omit participant emails, phone numbers, and other judges' scoring or identity data. |
 
 ---
 

@@ -220,7 +220,36 @@ Upon final submission via `POST /api/v1/submissions/:id/submit`:
 
 ---
 
-## 10. Security & Privacy Baseline
+## 10. Judge Management & Automated Assignment Engine (Phase 6)
+
+### Event-Specific Judge Pool
+- Judge authorization is scoped strictly per hackathon via `hackathon_judges`. A user holding the `JUDGE` system role cannot access or evaluate projects for an event unless explicitly enrolled as an `ACTIVE` judge for that event.
+- Organizers manage judge pools via `/api/v1/hackathons/:id/judges` (add, toggle active/inactive, remove before finalization).
+
+### Automated Assignment Algorithm (`JudgeAssignmentService`)
+- **Greedy Workload Balancer**: Deterministically selects candidate judges by ascending current workload count, minimizing workload variance across active judges.
+- **Strict Tie-Breaking**: Deterministic UUID comparison breaks ties without uncontrolled random numbers or timestamps.
+- **Conflict of Interest Elimination**:
+  - Structural COI: Excludes any judge found in `team_members` for the submission's team.
+  - Declared COI: Excludes any judge with a recorded conflict in `judge_conflicts` for that submission or team.
+- **Safe Failure**: Detects if any submission has fewer than $K$ eligible candidates; halts generation and returns comprehensive diagnostics without creating corrupt or partial assignments.
+
+### Preview & Transactional Finalization Lifecycle
+1. **Preview**: Pure in-memory calculation returning projected assignments, workload distribution, and conflict count without altering official database state.
+2. **Finalization**: Multi-step operation executed within a single PostgreSQL ACID transaction (`BEGIN ... COMMIT`).
+   - Clears existing assignments for the hackathon.
+   - Atomically inserts new assignments with `is_final = TRUE`.
+   - Updates `hackathon_judging_configs` with `assignments_finalized = TRUE` and `finalized_at`.
+   - Requires explicit `forceRegenerate: true` to overwrite existing official assignments, emitting `ASSIGNMENTS_REGENERATED` audit logs.
+
+### Judge Portal & IDOR Defense
+- Assigned project queue (`/judge/assignments`) queries only assignments where `judge_id = req.user.id` and `is_final = TRUE`.
+- Direct assignment inspection verifies judge ownership, returning `403 FORBIDDEN` if another judge's assignment ID is supplied.
+- Participant private emails and other judges' scoring details are strictly excluded from judge DTOs.
+
+---
+
+## 11. Security & Privacy Baseline
 
 1. **Security Headers**: Managed by Helmet with strict Content-Security-Policy.
 2. **CORS**: Explicit whitelist from `CORS_ORIGIN`, rejecting arbitrary cross-site access.

@@ -1,4 +1,4 @@
-import { UserRole, HackathonStatus, RegistrationStatus, SubmissionStatus } from './enums';
+import { UserRole, HackathonStatus, RegistrationStatus, SubmissionStatus, JudgeStatus, JudgeAssignmentStatus } from './enums';
 import { HackathonDetail, HackathonSummary, Registration, RegistrationDetail } from './domain';
 
 export interface ApiResponse<T = unknown> {
@@ -177,4 +177,38 @@ export interface GalleryResponse {
   page: number;
   limit: number;
   totalPages: number;
+}
+
+// ==========================================
+// PHASE 6: JUDGE MANAGEMENT & ASSIGNMENTS DTOS
+// ==========================================
+
+export interface AddJudgeRequest {
+  judgeId: string;
+  status?: JudgeStatus;
+}
+
+export interface UpdateJudgeStatusRequest {
+  status: JudgeStatus;
+}
+
+export interface UpdateJudgingConfigRequest {
+  judgesPerSubmission: number;
+}
+
+export interface DeclareConflictRequest {
+  judgeId: string;
+  teamId?: string;
+  submissionId?: string;
+  reason: string;
+}
+
+export interface GenerateAssignmentsRequest {
+  judgesPerSubmission?: number;
+}
+
+export interface FinalizeAssignmentsRequest {
+  judgesPerSubmission?: number;
+  forceRegenerate?: boolean;
+  confirmRegenerate?: boolean;
 }

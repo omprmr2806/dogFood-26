@@ -63,6 +63,56 @@ export class UserRepository {
         status: 'ACTIVE',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
+      },
+      {
+        id: '00000000-0000-0000-0000-000000000021',
+        email: 'judge.alice@dogfood.local',
+        password_hash: '$argon2id$v=19$m=19456,t=2,p=1$jxu2nKsm8Nm1HswoopD3xg$HaghDc0wS6rqJy0uevC7yxNvjld8Ym7o7DI7y6z+BIg',
+        full_name: 'Dr. Alice Algorithm',
+        role: UserRole.JUDGE,
+        status: 'ACTIVE',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: '00000000-0000-0000-0000-000000000022',
+        email: 'judge.bob@dogfood.local',
+        password_hash: '$argon2id$v=19$m=19456,t=2,p=1$jxu2nKsm8Nm1HswoopD3xg$HaghDc0wS6rqJy0uevC7yxNvjld8Ym7o7DI7y6z+BIg',
+        full_name: 'Bob Benchmark',
+        role: UserRole.JUDGE,
+        status: 'ACTIVE',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: '00000000-0000-0000-0000-000000000023',
+        email: 'judge.charlie@dogfood.local',
+        password_hash: '$argon2id$v=19$m=19456,t=2,p=1$jxu2nKsm8Nm1HswoopD3xg$HaghDc0wS6rqJy0uevC7yxNvjld8Ym7o7DI7y6z+BIg',
+        full_name: 'Charlie Criterion',
+        role: UserRole.JUDGE,
+        status: 'ACTIVE',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: '00000000-0000-0000-0000-000000000024',
+        email: 'judge.diana@dogfood.local',
+        password_hash: '$argon2id$v=19$m=19456,t=2,p=1$jxu2nKsm8Nm1HswoopD3xg$HaghDc0wS6rqJy0uevC7yxNvjld8Ym7o7DI7y6z+BIg',
+        full_name: 'Diana Data',
+        role: UserRole.JUDGE,
+        status: 'ACTIVE',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      },
+      {
+        id: '00000000-0000-0000-0000-000000000025',
+        email: 'judge.conflict@dogfood.local',
+        password_hash: '$argon2id$v=19$m=19456,t=2,p=1$jxu2nKsm8Nm1HswoopD3xg$HaghDc0wS6rqJy0uevC7yxNvjld8Ym7o7DI7y6z+BIg',
+        full_name: 'Judge TeamConflict',
+        role: UserRole.JUDGE,
+        status: 'ACTIVE',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       }
     ];
 
@@ -127,6 +177,18 @@ export class UserRepository {
     };
     this.inMemoryUsers.set(newUser.email, newUser);
     return newUser;
+  }
+
+  async findByRole(role: UserRole): Promise<UserEntity[]> {
+    const isDbConnected = await checkDatabaseHealth();
+    if (isDbConnected) {
+      const res = await dbPool.query<UserEntity>(
+        'SELECT id, email, password_hash, full_name, role, status, created_at, updated_at FROM users WHERE role = $1 ORDER BY full_name ASC',
+        [role]
+      );
+      return res.rows;
+    }
+    return Array.from(this.inMemoryUsers.values()).filter(u => u.role === role);
   }
 }
 

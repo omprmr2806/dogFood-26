@@ -128,6 +128,11 @@ export default function DashboardPage() {
                 Organizer Console &rarr;
               </Link>
             )}
+            {(user.role === 'JUDGE' || user.role === 'ADMIN') && (
+              <Link href="/judge/assignments" className="btn" style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem', background: '#6366f1', borderColor: '#6366f1', color: '#fff' }}>
+                Judge Assigned Queue &rarr;
+              </Link>
+            )}
           </div>
         </div>
 
