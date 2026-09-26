@@ -178,7 +178,49 @@ Every team endpoint enforces a multi-layer verification chain:
 
 ---
 
-## 9. Security & Privacy Baseline
+## 9. Submissions & Public Project Gallery Architecture (Phase 5)
+
+### Submission Lifecycle & State Machine
+Project submissions undergo a deterministic state progression tightly coupled with the event state:
+
+```
+[DRAFT] ──(Submit Project)──> [SUBMITTED] ──(Judging State)──> [LOCKED] ──> [UNDER_REVIEW] ──> [FINALIZED]
+   │                              │                                │
+   └──────────────────────────────┴────────(Organizer Disqualify)──┴─────────────────────────> [DISQUALIFIED]
+```
+
+- **`DRAFT`**: Editable by authorized team members when event is in `OPEN` or `RUNNING`. Strictly invisible to the public gallery.
+- **`SUBMITTED`**: Project finalized and submitted by team; snapshot captured in `submission_versions`. Visible in the public gallery.
+- **`LOCKED`**: Automatic transition when event enters `JUDGING`. Participant modifications are rejected with `403 SUBMISSIONS_LOCKED`.
+- **`UNDER_REVIEW`**: Project is currently undergoing evaluation by assigned judges.
+- **`FINALIZED`**: Judging concludes; scores finalized (read-only).
+- **`DISQUALIFIED`**: Administrative flag assigned by Organizers/Admins for rule violations. Excluded from public gallery.
+
+### Submission Ownership & Relational Constraints
+A submission belongs strictly to a **Hackathon** and a **Team**. To eliminate orphaned or spoofed submissions:
+1. `UNIQUE(team_id)` guarantees that each team can submit at most one project per event.
+2. Composite foreign key `(team_id, hackathon_id) REFERENCES teams(id, hackathon_id)` prevents submissions from referencing cross-event teams.
+3. Every mutation checks `user` -> `team_members` -> `team.id === submission.team_id`, rejecting non-member edits with `403 FORBIDDEN`.
+
+### URL Security & Offline Integrity (Zero-SSRF Policy)
+- External URLs (GitHub repositories, live demos, video walkthroughs, and slide decks) are stored solely as user-entered string metadata.
+- **Whitelisted Schemes**: Input validation enforces strict `http://` and `https://` schemas while rejecting dangerous protocols (`javascript:`, `data:`, `file:`, `ftp:`).
+- **Zero Server-Side Fetching**: The DOGFOOD backend never queries, scrapes, or fetches external URLs server-side. This ensures absolute immunity from Server-Side Request Forgery (SSRF) and maintains 100% functionality in offline/air-gapped networks.
+- External links rendered in the UI open safely with `rel="noopener noreferrer"` and `target="_blank"`.
+
+### Submission Versioning & Audit History
+Upon final submission via `POST /api/v1/submissions/:id/submit`:
+- An immutable version record is written to `submission_versions` capturing a full JSON snapshot (`snapshot_data`) along with the submitting user ID and timestamp.
+- The `submitted_at` timestamp is determined solely by the server clock.
+
+### Public Gallery & Privacy Boundaries
+- **Public Visibility Filter**: Only eligible submissions (`SUBMITTED`, `LOCKED`, `UNDER_REVIEW`, `FINALIZED`) are returned in `/api/v1/gallery`. Drafts and disqualified entries are hidden.
+- **DTO Sanitization**: Public responses exclude participant emails, internal database identifiers, and unpublished reviewer comments.
+- **Search & Pagination**: Server-side filtering by title, tagline keywords, and technology tags with indexed pagination (`page`, `limit`).
+
+---
+
+## 10. Security & Privacy Baseline
 
 1. **Security Headers**: Managed by Helmet with strict Content-Security-Policy.
 2. **CORS**: Explicit whitelist from `CORS_ORIGIN`, rejecting arbitrary cross-site access.

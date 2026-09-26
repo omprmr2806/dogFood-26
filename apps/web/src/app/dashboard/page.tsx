@@ -120,6 +120,9 @@ export default function DashboardPage() {
             <Link href="/hackathons" className="btn" style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem' }}>
               Explore Hackathons &amp; Teams &rarr;
             </Link>
+            <Link href="/gallery" className="btn" style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem', background: '#28a745', borderColor: '#28a745', color: '#fff' }}>
+              Public Project Gallery &rarr;
+            </Link>
             {(user.role === 'ORGANIZER' || user.role === 'ADMIN') && (
               <Link href="/organizer/hackathons" className="btn" style={{ fontSize: '0.85rem', padding: '0.4rem 0.8rem', background: 'var(--bg-secondary)', border: '1px solid var(--border-subtle)', color: 'var(--text-primary)' }}>
                 Organizer Console &rarr;

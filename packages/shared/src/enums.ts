@@ -35,6 +35,9 @@ export enum TeamStatus {
 export enum SubmissionStatus {
   DRAFT = 'DRAFT',
   SUBMITTED = 'SUBMITTED',
+  LOCKED = 'LOCKED',
+  UNDER_REVIEW = 'UNDER_REVIEW',
+  FINALIZED = 'FINALIZED',
   DISQUALIFIED = 'DISQUALIFIED'
 }
 

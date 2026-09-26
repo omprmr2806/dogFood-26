@@ -130,13 +130,51 @@ Individual user assignments to teams, strictly guaranteeing one team per partici
   - `CONSTRAINT uq_team_user UNIQUE (team_id, user_id)` - Redundant uniqueness per team.
 - **Indexes**: `idx_team_members_team_id`, `idx_team_members_user_id`, `idx_team_members_hackathon_user` (UNIQUE)
 
+### Phase 5 Tables (Submissions & Version Snapshots)
+
+#### `submissions`
+Project submissions linked to hackathons and teams.
+- `id` (UUID PRIMARY KEY DEFAULT uuid_generate_v4())
+- `hackathon_id` (UUID NOT NULL REFERENCES hackathons(id) ON DELETE CASCADE)
+- `team_id` (UUID NOT NULL)
+- `title` (VARCHAR(150) NOT NULL)
+- `tagline` (VARCHAR(255))
+- `description` (TEXT NOT NULL)
+- `problem_statement` (TEXT)
+- `solution` (TEXT)
+- `technology_stack` (TEXT[] DEFAULT '{}')
+- `repo_url` (VARCHAR(500))
+- `demo_url` (VARCHAR(500))
+- `demo_video_url` (VARCHAR(500))
+- `presentation_url` (VARCHAR(500))
+- `cover_image_path` (VARCHAR(500))
+- `status` (VARCHAR(32) NOT NULL DEFAULT 'DRAFT' CHECK (status IN ('DRAFT', 'SUBMITTED', 'LOCKED', 'UNDER_REVIEW', 'FINALIZED', 'DISQUALIFIED')))
+- `submitted_at` (TIMESTAMP WITH TIME ZONE)
+- `created_at` (TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)
+- `updated_at` (TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)
+- **Constraints**:
+  - `CONSTRAINT fk_submissions_team_hackathon FOREIGN KEY (team_id, hackathon_id) REFERENCES teams(id, hackathon_id) ON DELETE CASCADE`
+  - `CONSTRAINT uq_submissions_team_id UNIQUE (team_id)` - Guarantees exactly at most one submission per team.
+  - `CONSTRAINT uq_submissions_id_hackathon UNIQUE (id, hackathon_id)` - Composite foreign key reference for downstream judging allocations.
+- **Indexes**: `idx_submissions_hackathon_id`, `idx_submissions_team_id` (UNIQUE), `idx_submissions_status`, `idx_submissions_submitted_at`, `idx_submissions_title`
+
+#### `submission_versions`
+Immutable version snapshots captured at submission or major milestone for auditing.
+- `id` (UUID PRIMARY KEY DEFAULT uuid_generate_v4())
+- `submission_id` (UUID NOT NULL REFERENCES submissions(id) ON DELETE CASCADE)
+- `version_number` (INTEGER NOT NULL)
+- `snapshot_data` (JSONB NOT NULL)
+- `created_by` (UUID REFERENCES users(id) ON DELETE SET NULL)
+- `created_at` (TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP)
+- **Constraints**: `CONSTRAINT uq_submission_version UNIQUE (submission_id, version_number)`
+- **Indexes**: `idx_submission_versions_submission_id`
+
 ---
 
-## 3. Future Phases Schema Preview (Phases 5–10)
+## 3. Future Phases Schema Preview (Phases 6–10)
 
 | Table | Purpose |
 | :--- | :--- |
-| `submissions` | Project submissions, repository links, descriptions, and media |
 | `rubrics` | Judging rubric configurations |
 | `rubric_criteria` | Evaluation criteria with percentage weights and maximum score points |
 | `judge_assignments`| Workload-balanced evaluation allocations avoiding conflicts of interest |

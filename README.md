@@ -4,7 +4,7 @@ DOGFOOD is an open-source, self-hosted hackathon submission, judging, and commun
 
 ---
 
-## Current Project Status: Phase 4 (Team & Membership Management)
+## Current Project Status: Phase 5 (Submissions + Public Project Gallery)
 
 - **Completed**:
   - **Foundational Architecture**: Next.js App Router frontend, Express modular backend, PostgreSQL 16 schema.
@@ -19,14 +19,18 @@ DOGFOOD is an open-source, self-hosted hackathon submission, judging, and commun
     - Secure randomized invite codes (`DOG-XXXXXX`), case-insensitive matching, and leader-only regeneration.
     - Full IDOR defense: Participants cannot rename, disband, or tamper with other teams.
     - Data privacy: Invite codes and member emails are strictly omitted from public team listings.
-  - **Interactive Team Management UI**:
-    - Participant team exploration and join console (`/hackathons/[slug]/teams`).
-    - Dedicated team roster and invite code hub (`/hackathons/[slug]/my-team`).
-    - Organizer team supervision and disbandment console (`/organizer/hackathons/[id]/teams`).
+  - **Submissions & Public Project Gallery**:
+    - Relational integrity: Exactly one submission per team enforced at the PostgreSQL layer via `UNIQUE(team_id)` and composite FK `(team_id, hackathon_id) REFERENCES teams(id, hackathon_id)`.
+    - Submission Versioning: Immutable audit snapshotting in `submission_versions` capturing project content at submission.
+    - URL Scheme Security: Strictly whitelisted `http://` and `https://` schemes; rejected `javascript:`, `data:`, `file:`, `ftp:`. 100% offline with zero server-side external fetches (eliminates SSRF).
+    - Event State Locking: Participant edits strictly blocked once hackathon enters `JUDGING`, `COMPLETED`, or `ARCHIVED` status.
+    - Public Project Gallery (`/gallery`, `/gallery/[id]`): Server-side search, technology filtering, pagination, and privacy boundaries (drafts strictly excluded).
+    - Participant Submission Workspace (`/hackathons/[slug]/submission`): Form drafting, auto-save, URL validation, and confirmation submission workflow.
+    - Organizer Submission Supervision (`/organizer/hackathons/[id]/submissions`): Live metrics, submission rosters, and administrative status controls.
   - **Security Protections**: Rate limiting, enumeration defense, session fixation protection, mass-assignment defense, and immutable audit logging.
-  - **Testing**: 77 automated unit and integration tests across 9 test suites.
+  - **Testing**: 102 automated unit and integration tests across 10 test suites.
 - **In Progress / Next Phase**:
-  - Phase 5: Submission Workflow & Track Categories.
+  - Phase 6: Judges, Evaluation Criteria & Rubrics.
 
 ---
 

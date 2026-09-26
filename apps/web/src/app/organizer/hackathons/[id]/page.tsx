@@ -184,6 +184,17 @@ export default function EditHackathonPage({ params }: { params: Promise<{ id: st
             Teams
           </Link>
           <Link
+            href={`/organizer/hackathons/${hackathon.id}/submissions`}
+            className="btn"
+            style={{
+              background: 'var(--bg-secondary)',
+              border: '1px solid var(--border-subtle)',
+              fontSize: '0.85rem'
+            }}
+          >
+            Submissions
+          </Link>
+          <Link
             href={`/organizer/hackathons/${hackathon.id}/registrations`}
             className="btn"
             style={{

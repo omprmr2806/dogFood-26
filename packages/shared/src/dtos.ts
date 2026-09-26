@@ -1,4 +1,4 @@
-import { UserRole, HackathonStatus, RegistrationStatus } from './enums';
+import { UserRole, HackathonStatus, RegistrationStatus, SubmissionStatus } from './enums';
 import { HackathonDetail, HackathonSummary, Registration, RegistrationDetail } from './domain';
 
 export interface ApiResponse<T = unknown> {
@@ -109,4 +109,72 @@ export interface JoinTeamRequest {
 export interface AddTeamMemberRequest {
   userId: string;
   role?: string;
+}
+
+// Submission DTOs
+export interface CreateSubmissionRequest {
+  title: string;
+  tagline?: string;
+  description: string;
+  problemStatement?: string;
+  solution?: string;
+  technologyStack?: string[];
+  repoUrl?: string;
+  demoUrl?: string;
+  demoVideoUrl?: string;
+  presentationUrl?: string;
+  coverImagePath?: string;
+}
+
+export interface UpdateSubmissionRequest {
+  title?: string;
+  tagline?: string;
+  description?: string;
+  problemStatement?: string;
+  solution?: string;
+  technologyStack?: string[];
+  repoUrl?: string;
+  demoUrl?: string;
+  demoVideoUrl?: string;
+  presentationUrl?: string;
+  coverImagePath?: string;
+}
+
+export interface UpdateSubmissionStatusRequest {
+  status: SubmissionStatus;
+}
+
+// Public Gallery DTOs
+export interface GalleryQuery {
+  hackathonId?: string;
+  search?: string;
+  technology?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface GalleryItem {
+  id: string;
+  hackathonId: string;
+  hackathonName: string;
+  hackathonSlug: string;
+  teamId: string;
+  teamName: string;
+  title: string;
+  tagline?: string;
+  description: string;
+  technologyStack: string[];
+  repoUrl?: string;
+  demoUrl?: string;
+  coverImagePath?: string;
+  status: SubmissionStatus;
+  submittedAt?: string;
+}
+
+export interface GalleryResponse {
+  items: GalleryItem[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
 }

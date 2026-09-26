@@ -17,7 +17,16 @@ import {
   TeamDetail,
   CreateTeamRequest,
   UpdateTeamRequest,
-  JoinTeamRequest
+  JoinTeamRequest,
+  SubmissionDetail,
+  SubmissionSummary,
+  CreateSubmissionRequest,
+  UpdateSubmissionRequest,
+  UpdateSubmissionStatusRequest,
+  GalleryResponse,
+  GalleryItem,
+  GalleryQuery,
+  SubmissionStatus
 } from '@dogfood/shared';
 
 export class ApiClientError extends Error {
@@ -350,4 +359,122 @@ export async function apiDisbandTeam(hackathonIdOrSlug: string, teamId: string):
   });
 
   return await handleResponse<{ message: string }>(res);
+}
+
+// ==========================================
+// SUBMISSION APIS
+// ==========================================
+
+export async function apiCreateSubmission(
+  hackathonIdOrSlug: string,
+  data: CreateSubmissionRequest
+): Promise<SubmissionDetail> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonIdOrSlug}/submissions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+    credentials: 'include'
+  });
+
+  return await handleResponse<SubmissionDetail>(res);
+}
+
+export async function apiGetMySubmission(hackathonIdOrSlug: string): Promise<SubmissionDetail | null> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonIdOrSlug}/my-submission`, {
+    method: 'GET',
+    credentials: 'include',
+    cache: 'no-store'
+  });
+
+  if (res.status === 404) return null;
+  return await handleResponse<SubmissionDetail | null>(res);
+}
+
+export async function apiGetHackathonSubmissions(hackathonIdOrSlug: string): Promise<SubmissionSummary[]> {
+  const res = await fetch(`${frontendEnv.apiUrl}/hackathons/${hackathonIdOrSlug}/submissions`, {
+    method: 'GET',
+    credentials: 'include',
+    cache: 'no-store'
+  });
+
+  return await handleResponse<SubmissionSummary[]>(res);
+}
+
+export async function apiGetSubmission(id: string): Promise<SubmissionDetail> {
+  const res = await fetch(`${frontendEnv.apiUrl}/submissions/${id}`, {
+    method: 'GET',
+    credentials: 'include',
+    cache: 'no-store'
+  });
+
+  return await handleResponse<SubmissionDetail>(res);
+}
+
+export async function apiUpdateSubmission(
+  id: string,
+  data: UpdateSubmissionRequest
+): Promise<SubmissionDetail> {
+  const res = await fetch(`${frontendEnv.apiUrl}/submissions/${id}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+    credentials: 'include'
+  });
+
+  return await handleResponse<SubmissionDetail>(res);
+}
+
+export async function apiSubmitProject(id: string): Promise<SubmissionDetail> {
+  const res = await fetch(`${frontendEnv.apiUrl}/submissions/${id}/submit`, {
+    method: 'POST',
+    credentials: 'include'
+  });
+
+  return await handleResponse<SubmissionDetail>(res);
+}
+
+export async function apiUpdateSubmissionStatus(
+  id: string,
+  status: SubmissionStatus
+): Promise<SubmissionDetail> {
+  const res = await fetch(`${frontendEnv.apiUrl}/submissions/${id}/status`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status }),
+    credentials: 'include'
+  });
+
+  return await handleResponse<SubmissionDetail>(res);
+}
+
+// ==========================================
+// PUBLIC GALLERY APIS
+// ==========================================
+
+export async function apiGetGallery(params?: GalleryQuery): Promise<GalleryResponse> {
+  const query = new URLSearchParams();
+  if (params?.hackathonId) query.set('hackathonId', params.hackathonId);
+  if (params?.search) query.set('search', params.search);
+  if (params?.technology) query.set('technology', params.technology);
+  if (params?.page) query.set('page', String(params.page));
+  if (params?.limit) query.set('limit', String(params.limit));
+
+  const qs = query.toString();
+  const url = `${frontendEnv.apiUrl}/gallery${qs ? `?${qs}` : ''}`;
+
+  const res = await fetch(url, {
+    method: 'GET',
+    cache: 'no-store'
+  });
+
+  return await handleResponse<GalleryResponse>(res);
+}
+
+export async function apiGetGalleryProject(id: string): Promise<SubmissionDetail> {
+  const res = await fetch(`${frontendEnv.apiUrl}/gallery/${id}`, {
+    method: 'GET',
+    cache: 'no-store'
+  });
+
+  return await handleResponse<SubmissionDetail>(res);
 }

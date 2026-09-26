@@ -185,20 +185,37 @@ export default function HackathonDetailPage({ params }: { params: Promise<{ slug
                   Registered on {new Date(registration.registeredAt).toLocaleDateString()}
                 </div>
                 {registration.status === RegistrationStatus.ACCEPTED && (
-                  <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
-                    <Link
-                      href={`/hackathons/${slug}/my-team`}
-                      className="btn"
-                      style={{ fontSize: '0.75rem', padding: '0.3rem 0.6rem' }}
-                    >
-                      My Team &rarr;
-                    </Link>
-                    <Link
-                      href={`/hackathons/${slug}/teams`}
-                      style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', textDecoration: 'underline' }}
-                    >
-                      Browse All Teams
-                    </Link>
+                  <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: '0.4rem', width: '100%' }}>
+                      <Link
+                        href={`/hackathons/${slug}/my-team`}
+                        className="btn"
+                        style={{ flex: 1, fontSize: '0.75rem', padding: '0.3rem 0.4rem', textAlign: 'center' }}
+                      >
+                        My Team
+                      </Link>
+                      <Link
+                        href={`/hackathons/${slug}/submission`}
+                        className="btn"
+                        style={{ flex: 1, fontSize: '0.75rem', padding: '0.3rem 0.4rem', backgroundColor: '#28a745', borderColor: '#28a745', color: '#fff', textAlign: 'center' }}
+                      >
+                        Project &rarr;
+                      </Link>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.8rem', marginTop: '0.2rem' }}>
+                      <Link
+                        href={`/hackathons/${slug}/teams`}
+                        style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', textDecoration: 'underline' }}
+                      >
+                        Browse Teams
+                      </Link>
+                      <Link
+                        href="/gallery"
+                        style={{ fontSize: '0.75rem', color: 'var(--accent-primary)', textDecoration: 'underline' }}
+                      >
+                        Gallery
+                      </Link>
+                    </div>
                   </div>
                 )}
               </div>

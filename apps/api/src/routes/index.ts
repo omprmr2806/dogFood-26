@@ -4,6 +4,8 @@ import { authRoutes } from './auth.routes';
 import { rbacTestRoutes } from './rbac-test.routes';
 import { hackathonRoutes } from './hackathon.routes';
 import { teamRoutes } from './team.routes';
+import submissionRoutes from './submission.routes';
+import galleryRoutes from './gallery.routes';
 
 const router = Router();
 
@@ -12,5 +14,7 @@ router.use(authRoutes);
 router.use(rbacTestRoutes);
 router.use(hackathonRoutes);
 router.use(teamRoutes);
+router.use(submissionRoutes);
+router.use(galleryRoutes);
 
 export const apiRouter = router;

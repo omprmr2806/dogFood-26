@@ -92,6 +92,43 @@ export interface SubmissionSummary {
   teamName: string;
   title: string;
   tagline?: string;
+  technologyStack: string[];
   status: SubmissionStatus;
+  submittedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SubmissionDetail {
+  id: string;
+  hackathonId: string;
+  hackathonName?: string;
+  hackathonSlug?: string;
+  teamId: string;
+  teamName: string;
+  title: string;
+  tagline?: string;
+  description: string;
+  problemStatement?: string;
+  solution?: string;
+  technologyStack: string[];
+  repoUrl?: string;
+  demoUrl?: string;
+  demoVideoUrl?: string;
+  presentationUrl?: string;
+  coverImagePath?: string;
+  status: SubmissionStatus;
+  submittedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  members?: { id: string; fullName: string; role?: string }[];
+}
+
+export interface SubmissionVersion {
+  id: string;
+  submissionId: string;
+  versionNumber: number;
+  snapshotData: Record<string, unknown>;
+  createdBy?: string;
   createdAt: string;
 }
