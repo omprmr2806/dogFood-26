@@ -9,17 +9,22 @@ Security is a first-class requirement in the DOGFOOD platform:
 
 ---
 
-## 2. Phase 1 Mitigations Implemented
+## 2. Mitigations Implemented (Phases 1 & 2)
 
-| Vulnerability Category | Phase 1 Defense Mechanism |
+| Threat Category | Phase 1 & 2 Defense Mechanism |
 | :--- | :--- |
-| **SQL Injection** | Parameterized queries via `pg` connection pool; zero string interpolation in queries. |
+| **Password Storage** | **Argon2id** password hashing (`m=19456, t=2, p=1`). Plaintext passwords and hashes are never exposed via APIs. |
+| **User Enumeration** | Constant-time dummy hash verification on failed logins; generic error message (*"Invalid email or password"*). |
+| **Session Hijacking / Theft** | `HttpOnly`, `SameSite=Lax`, `Secure` (production) cookies; server-side session revocation in PostgreSQL. |
+| **Session Fixation** | Complete session identifier rotation upon successful authentication. |
+| **Privilege Escalation** | Registration payload enforces strict schema rejecting client `role` injection; all new registrations default to `PARTICIPANT`. |
+| **Brute Force Attacks** | In-memory sliding window rate limiter (10 requests / minute) on `/api/v1/auth/*` returning `429 Too Many Requests`. |
+| **SQL Injection** | Parameterized SQL queries via `pg` connection pool; zero string concatenation. |
 | **Cross-Site Scripting (XSS)** | Helmet Content-Security-Policy (CSP) headers; React automatic DOM escaping. |
 | **Clickjacking / MIME Sniffing** | Helmet `X-Frame-Options: SAMEORIGIN` and `X-Content-Type-Options: nosniff`. |
-| **Cross-Origin Resource Sharing** | Explicit CORS whitelist configured via `CORS_ORIGIN`; wildcard origins rejected. |
+| **CORS Abuse** | Strict whitelist matching `CORS_ORIGIN`; wildcard origins rejected. |
 | **Denial of Service (DoS)** | Request body parsing capped at `100kb` (`BODY_SIZE_LIMIT`). |
-| **Information Disclosure** | Centralized error handler masks stack traces and internal errors in production. |
-| **Configuration Tampering** | Strict startup environment variable parsing via Zod (`apps/api/src/config/env.ts`). |
+| **Audit Trail** | Immutable `audit_logs` tracking `AUTH_REGISTER`, `AUTH_LOGIN_SUCCESS`, `AUTH_LOGIN_FAILED`, and `AUTH_LOGOUT`. |
 
 ---
 

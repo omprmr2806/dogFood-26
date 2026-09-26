@@ -1,4 +1,5 @@
 import express, { Application } from 'express';
+import cookieParser from 'cookie-parser';
 import { env } from './config/env';
 import { helmetSecurity, corsSecurity } from './middleware/security';
 import { requestLogger } from './middleware/requestLogger';
@@ -14,6 +15,9 @@ export function createApp(): Application {
   // Security headers & CORS
   app.use(helmetSecurity);
   app.use(corsSecurity);
+
+  // Cookie parser for secure session cookies
+  app.use(cookieParser());
 
   // Request size limit & JSON parser
   app.use(express.json({ limit: env.BODY_SIZE_LIMIT }));
