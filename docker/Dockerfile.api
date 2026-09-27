@@ -1,41 +1,73 @@
 # ==========================================
 # DOGFOOD API Dockerfile (Multi-stage)
 # ==========================================
+
+# ---- Stage 1: base ----
 FROM node:20-alpine AS base
 WORKDIR /app
 
-# Dependencies stage
+# ---- Stage 2: deps — install ALL workspace dependencies inside Docker ----
 FROM base AS deps
-COPY package.json package-lock.json* ./
+
+# Copy root manifest + lockfile first (best cache layer)
+COPY package.json package-lock.json ./
+
+# Copy workspace package manifests so npm can resolve the workspace graph
 COPY packages/shared/package.json ./packages/shared/
 COPY apps/api/package.json ./apps/api/
-RUN npm ci --include-workspace-root --workspace=@dogfood/shared --workspace=@dogfood/api
 
-# Builder stage
+# npm workspaces hoist everything to the root node_modules.
+# packages/shared and apps/api do NOT get their own node_modules subdirs,
+# so we install only into root. --include-workspace-root ensures root
+# devDependencies (typescript) are installed too.
+RUN npm ci --include-workspace-root \
+      --workspace=@dogfood/shared \
+      --workspace=@dogfood/api
+
+# ---- Stage 3: build — compile shared then api ----
 FROM base AS builder
+
+# Copy installed dependencies from deps stage (root node_modules only)
 COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/packages/shared/node_modules ./packages/shared/node_modules
-COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
+
+# Copy root package.json (needed for workspace resolution at build time)
 COPY package.json ./
+
+# Copy shared package source + manifest + tsconfig
 COPY packages/shared ./packages/shared
+
+# Copy api source + manifest + tsconfig
 COPY apps/api ./apps/api
+
+# Build shared package first (api depends on it)
 RUN npm --workspace=@dogfood/shared run build
+
+# Build api
 RUN npm --workspace=@dogfood/api run build
 
-# Production runtime stage
+# ---- Stage 4: runner — minimal production image ----
 FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=4000
 
 # Non-root user for security
-RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 apiuser
+RUN addgroup --system --gid 1001 nodejs \
+ && adduser --system --uid 1001 apiuser
 
-COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
-COPY --from=builder /app/packages/shared/package.json ./packages/shared/package.json
-COPY --from=builder /app/apps/api/dist ./apps/api/dist
-COPY --from=builder /app/apps/api/package.json ./apps/api/package.json
-COPY --from=builder /app/node_modules ./node_modules
+# Copy root node_modules (contains all hoisted runtime deps + @dogfood/shared symlink)
+COPY --from=builder --chown=apiuser:nodejs /app/node_modules ./node_modules
+
+# Copy root package.json (needed for workspace symlink resolution at runtime)
+COPY --from=builder --chown=apiuser:nodejs /app/package.json ./
+
+# Copy shared package dist + manifest (symlink target in node_modules)
+COPY --from=builder --chown=apiuser:nodejs /app/packages/shared/dist ./packages/shared/dist
+COPY --from=builder --chown=apiuser:nodejs /app/packages/shared/package.json ./packages/shared/package.json
+
+# Copy api compiled output + manifest
+COPY --from=builder --chown=apiuser:nodejs /app/apps/api/dist ./apps/api/dist
+COPY --from=builder --chown=apiuser:nodejs /app/apps/api/package.json ./apps/api/package.json
 
 USER apiuser
 EXPOSE 4000

@@ -1,0 +1,58 @@
+# ============================================================
+# .dockerignore — prevents host-only artifacts from entering
+# the Docker build context.
+# ============================================================
+
+# --- Host-generated node_modules (ALL levels) ---
+node_modules/
+apps/api/node_modules/
+apps/web/node_modules/
+packages/shared/node_modules/
+
+# --- Host build outputs ---
+dist/
+build/
+out/
+apps/api/dist/
+apps/web/dist/
+packages/shared/dist/
+
+# --- Next.js cache & standalone output ---
+.next/
+apps/web/.next/
+
+# --- TypeScript incremental build info ---
+*.tsbuildinfo
+packages/shared/tsconfig.tsbuildinfo
+apps/api/tsconfig.tsbuildinfo
+apps/web/tsconfig.tsbuildinfo
+
+# --- Environment / secrets ---
+.env
+.env.local
+.env.*.local
+
+# --- Git ---
+.git/
+.gitignore
+
+# --- Logs ---
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# --- OS / editor artifacts ---
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# --- Test coverage ---
+coverage/
+
+# --- Docker data ---
+pgdata/
+uploads/
