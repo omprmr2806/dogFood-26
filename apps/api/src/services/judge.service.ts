@@ -95,12 +95,16 @@ export class JudgeService {
     };
   }
 
+  private async getHackathon(hackathonIdOrSlug: string): Promise<any> {
+    return hackathonService.getHackathonByIdOrSlug(hackathonIdOrSlug, UserRole.ORGANIZER);
+  }
+
   // ==========================================
   // JUDGE POOL MANAGEMENT
   // ==========================================
 
   async listJudges(hackathonIdOrSlug: string): Promise<HackathonJudge[]> {
-    const hackathon = await hackathonService.getHackathonByIdOrSlug(hackathonIdOrSlug);
+    const hackathon = await this.getHackathon(hackathonIdOrSlug);
     const judges = await judgeRepository.listJudgesForHackathon(hackathon.id);
     return judges.map((j) => this.mapJudgeToDto(j));
   }
@@ -108,7 +112,7 @@ export class JudgeService {
   async getAvailableJudges(hackathonIdOrSlug: string): Promise<{
     availableUsers: Array<{ id: string; email: string; fullName: string; isEnrolled: boolean }>;
   }> {
-    const hackathon = await hackathonService.getHackathonByIdOrSlug(hackathonIdOrSlug);
+    const hackathon = await this.getHackathon(hackathonIdOrSlug);
     const allJudges = await userRepository.findByRole(UserRole.JUDGE);
     const enrolled = await judgeRepository.listJudgesForHackathon(hackathon.id);
     const enrolledIds = new Set(enrolled.map((e) => e.judge_id));
@@ -129,7 +133,7 @@ export class JudgeService {
     actorId: string,
     ipAddress?: string
   ): Promise<HackathonJudge> {
-    const hackathon = await hackathonService.getHackathonByIdOrSlug(hackathonIdOrSlug);
+    const hackathon = await this.getHackathon(hackathonIdOrSlug);
 
     // Guard: Hackathon state
     if (hackathon.status === HackathonStatus.COMPLETED || hackathon.status === HackathonStatus.ARCHIVED) {
@@ -191,7 +195,7 @@ export class JudgeService {
     actorId: string,
     ipAddress?: string
   ): Promise<HackathonJudge> {
-    const hackathon = await hackathonService.getHackathonByIdOrSlug(hackathonIdOrSlug);
+    const hackathon = await this.getHackathon(hackathonIdOrSlug);
 
     const existing = await judgeRepository.getJudgeByHackathonAndUser(hackathon.id, judgeId);
     if (!existing) {
@@ -235,7 +239,7 @@ export class JudgeService {
     actorId: string,
     ipAddress?: string
   ): Promise<void> {
-    const hackathon = await hackathonService.getHackathonByIdOrSlug(hackathonIdOrSlug);
+    const hackathon = await this.getHackathon(hackathonIdOrSlug);
 
     // Guard: Hackathon state
     if (hackathon.status === HackathonStatus.COMPLETED || hackathon.status === HackathonStatus.ARCHIVED) {
@@ -279,7 +283,7 @@ export class JudgeService {
   // ==========================================
 
   async getJudgingConfig(hackathonIdOrSlug: string): Promise<JudgingConfig> {
-    const hackathon = await hackathonService.getHackathonByIdOrSlug(hackathonIdOrSlug);
+    const hackathon = await this.getHackathon(hackathonIdOrSlug);
     let config = await judgeRepository.getJudgingConfig(hackathon.id);
     if (!config) {
       config = await judgeRepository.upsertJudgingConfig(hackathon.id, 2);
@@ -293,7 +297,7 @@ export class JudgeService {
     actorId: string,
     ipAddress?: string
   ): Promise<JudgingConfig> {
-    const hackathon = await hackathonService.getHackathonByIdOrSlug(hackathonIdOrSlug);
+    const hackathon = await this.getHackathon(hackathonIdOrSlug);
 
     if (hackathon.status === HackathonStatus.COMPLETED || hackathon.status === HackathonStatus.ARCHIVED) {
       throw new AppError(
@@ -334,7 +338,7 @@ export class JudgeService {
   // ==========================================
 
   async listConflicts(hackathonIdOrSlug: string): Promise<JudgeConflict[]> {
-    const hackathon = await hackathonService.getHackathonByIdOrSlug(hackathonIdOrSlug);
+    const hackathon = await this.getHackathon(hackathonIdOrSlug);
     const conflicts = await judgeRepository.listConflictsForHackathon(hackathon.id);
     return conflicts.map((c) => this.mapConflictToDto(c));
   }
@@ -345,7 +349,7 @@ export class JudgeService {
     actorId: string,
     ipAddress?: string
   ): Promise<JudgeConflict> {
-    const hackathon = await hackathonService.getHackathonByIdOrSlug(hackathonIdOrSlug);
+    const hackathon = await this.getHackathon(hackathonIdOrSlug);
 
     // Verify judge is part of hackathon
     const judge = await judgeRepository.getJudgeByHackathonAndUser(hackathon.id, data.judgeId);
@@ -385,7 +389,7 @@ export class JudgeService {
     actorId: string,
     ipAddress?: string
   ): Promise<void> {
-    const hackathon = await hackathonService.getHackathonByIdOrSlug(hackathonIdOrSlug);
+    const hackathon = await this.getHackathon(hackathonIdOrSlug);
     const removed = await judgeRepository.removeConflict(conflictId, hackathon.id);
     if (!removed) {
       throw new AppError('Conflict record not found.', 404, 'CONFLICT_NOT_FOUND');
@@ -456,7 +460,7 @@ export class JudgeService {
     actorId?: string,
     ipAddress?: string
   ): Promise<AssignmentPreviewResult> {
-    const hackathon = await hackathonService.getHackathonByIdOrSlug(hackathonIdOrSlug);
+    const hackathon = await this.getHackathon(hackathonIdOrSlug);
 
     const engineInput = await this.prepareEngineInput(hackathon.id, data?.judgesPerSubmission);
     const result = judgeAssignmentService.execute(engineInput);
@@ -521,7 +525,7 @@ export class JudgeService {
     actorId: string,
     ipAddress?: string
   ): Promise<{ success: boolean; totalAssignments: number; message: string }> {
-    const hackathon = await hackathonService.getHackathonByIdOrSlug(hackathonIdOrSlug);
+    const hackathon = await this.getHackathon(hackathonIdOrSlug);
 
     // 1. Guard event state: allowed during RUNNING or JUDGING
     if (
@@ -606,7 +610,7 @@ export class JudgeService {
     if (actorRole !== UserRole.ADMIN && actorRole !== UserRole.ORGANIZER) {
       throw new AppError('Only organizers and administrators can inspect all assignments.', 403, 'FORBIDDEN');
     }
-    const hackathon = await hackathonService.getHackathonByIdOrSlug(hackathonIdOrSlug);
+    const hackathon = await this.getHackathon(hackathonIdOrSlug);
     const assignments = await judgeRepository.listAssignmentsForHackathon(hackathon.id);
     return assignments.map((a) => this.mapAssignmentToDto(a));
   }
@@ -615,7 +619,7 @@ export class JudgeService {
     hackathonIdOrSlug: string,
     judgeUserId: string
   ): Promise<{ assignments: JudgeAssignmentItem[]; stats: { total: number; completed: number; pending: number } }> {
-    const hackathon = await hackathonService.getHackathonByIdOrSlug(hackathonIdOrSlug);
+    const hackathon = await this.getHackathon(hackathonIdOrSlug);
 
     // Verify judge is enrolled and active
     const judge = await judgeRepository.getJudgeByHackathonAndUser(hackathon.id, judgeUserId);
@@ -644,7 +648,7 @@ export class JudgeService {
     assignmentId: string,
     judgeUserId: string
   ): Promise<JudgeAssignmentWithDetails> {
-    const hackathon = await hackathonService.getHackathonByIdOrSlug(hackathonIdOrSlug);
+    const hackathon = await this.getHackathon(hackathonIdOrSlug);
 
     const assignment = await judgeRepository.getAssignmentById(assignmentId);
     if (!assignment || assignment.hackathon_id !== hackathon.id) {

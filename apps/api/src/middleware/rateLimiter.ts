@@ -63,10 +63,10 @@ export function createRateLimiter(options: {
   };
 }
 
-// Auth: 5 attempts per 15 minutes (hardened for Phase 11)
+// Auth: 10 attempts per 15 minutes (hardened for Phase 11)
 export const authRateLimiter = createRateLimiter({
   windowMs: 15 * 60 * 1000,
-  maxRequests: 5,
+  maxRequests: process.env.AUTH_RATE_LIMIT_MAX ? parseInt(process.env.AUTH_RATE_LIMIT_MAX, 10) : 10,
   message: 'Too many login or registration attempts. Please wait 15 minutes before trying again.'
 });
 

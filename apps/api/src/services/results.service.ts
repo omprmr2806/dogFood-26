@@ -38,22 +38,24 @@ export class ResultsService {
     const result = await this.pool.query(
       `SELECT
            pjr.submission_id,
-           pjr.submission_title,
-           pjr.submission_tagline,
-           pjr.team_id,
-           pjr.team_name,
+           s.title AS submission_title,
+           s.tagline AS submission_tagline,
+           s.team_id,
+           t.name AS team_name,
            pjr.normalized_score,
            pjr.raw_score_avg,
            pjr.evaluations_completed,
            pjr.rank,
            pjr.is_tied,
-           pjr.is_disqualified,
+           (s.status = 'DISQUALIFIED') AS is_disqualified,
            COALESCE(vc.vote_count, 0)::int AS vote_count
          FROM project_judging_results pjr
+         JOIN submissions s ON s.id = pjr.submission_id
+         JOIN teams t ON t.id = s.team_id
          LEFT JOIN submission_vote_counts vc ON vc.submission_id = pjr.submission_id
         WHERE pjr.hackathon_id = $1
         ORDER BY
-          pjr.is_disqualified ASC,
+          (s.status = 'DISQUALIFIED') ASC,
           pjr.rank ASC NULLS LAST,
           vc.vote_count DESC NULLS LAST,
           pjr.submission_id ASC`,
